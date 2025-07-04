@@ -1,0 +1,43 @@
+import { marketType } from "./types"
+
+export const mockMarkets: marketType[] = [
+    {
+      marketId: 1,
+      title: 'Should billionaires exist?',
+      description: 'A debate on the existence and role of billionaires in society.',
+      trend: [60, 62, 65, 67, 68, 70, 68, 66, 67, 68],
+      yesPercent: 68,
+      noPercent: 32,
+      yesPrice: 0.68,
+      noPrice: 0.32,
+      totalLiquidity: 12000,
+      participants: 42,
+      lastUpdated: '2m ago',
+    },
+    {
+      marketId: 2,
+      title: 'Is the Gaza conflict necessary?',
+      description: 'A look at the ongoing conflict and its implications.',
+      trend: [50, 48, 45, 43, 41],
+      yesPercent: 41,
+      noPercent: 59,
+      yesPrice: 0.41,
+      noPrice: 0.59,
+      totalLiquidity: 8000,
+      participants: 28,
+      lastUpdated: '5m ago',
+    },
+    {
+      marketId: 3,
+      title: 'Will AI improve human happiness?',
+      description: 'Exploring the impact of AI on human well-being.',
+      trend: [70, 72, 73, 74, 74],
+      yesPercent: 74,
+      noPercent: 26,
+      yesPrice: 0.74,
+      noPrice: 0.26,
+      totalLiquidity: 15000,
+      participants: 35,
+      lastUpdated: '1m ago',
+    },
+  ]
