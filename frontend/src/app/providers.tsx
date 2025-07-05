@@ -1,22 +1,35 @@
 'use client';
 
-import { PrivyProvider } from '@privy-io/react-auth';
+import '@rainbow-me/rainbowkit/styles.css';
+
+import {
+  getDefaultConfig,
+} from '@rainbow-me/rainbowkit';
+import { WagmiProvider } from "wagmi";
+import { RainbowKitProvider } from '@rainbow-me/rainbowkit';
+import { sepolia } from 'viem/chains';
+import {
+  QueryClientProvider,
+  QueryClient,
+} from "@tanstack/react-query";
+
+export const config = getDefaultConfig({
+  appName: 'My RainbowKit App',
+  projectId: 'YOUR_PROJECT_ID',
+  chains: [sepolia as any],
+  ssr: true, // If your dApp uses server side rendering (SSR)
+});
+
+const queryClient = new QueryClient();
 
 export default function Providers({ children }: { children: React.ReactNode }) {
   return (
-    <PrivyProvider
-      appId={process.env.NEXT_PUBLIC_APP_ID!}
-      clientId={process.env.NEXT_PUBLIC_CLIENT_ID!}
-      config={{
-        // Create embedded wallets for users who don't have a wallet
-        embeddedWallets: {
-          ethereum: {
-            createOnLogin: 'users-without-wallets',
-          },
-        },
-      }}
-    >
-      {children}
-    </PrivyProvider>
+    <WagmiProvider config={config}>
+      <QueryClientProvider client={queryClient}>
+        <RainbowKitProvider>
+          {children}
+        </RainbowKitProvider>
+      </QueryClientProvider>
+    </WagmiProvider>
   );
 }
