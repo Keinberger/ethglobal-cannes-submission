@@ -34,6 +34,7 @@ npm run lint
 ## Architecture Overview
 
 ### Core Structure
+
 - **Frontend**: Next.js 15 with App Router and TypeScript
 - **Styling**: Tailwind CSS 4.0
 - **Charts**: Recharts for data visualization
@@ -42,6 +43,7 @@ npm run lint
 - **AMM Logic**: Simulated constant product formula (`x * y = k`) for token pricing
 
 ### Key Components
+
 - `DebateCard`: Displays market overview
 - `OpinionCard`: Handles trading interface
 - `OpinionStream`: Real-time trade activity
@@ -50,7 +52,9 @@ npm run lint
 - `ToggleButton`: UI toggle component
 
 ### Data Structure
+
 Debates are defined by the `debateType` interface with:
+
 - Basic info (title, description, opinionId)
 - Visual data (image, recent comments)
 - Opinion data (yesPrice, noPrice, yesPercent, noPercent)
@@ -58,6 +62,7 @@ Debates are defined by the `debateType` interface with:
 - Trend data (array of sentiment values over time)
 
 ### Routing
+
 - `/` - Home page (redirects to debates)
 - `/debates` - Debate overview page
 - `/debates/[opinionId]` - Individual debate details with opinion interface
@@ -77,9 +82,11 @@ Debates are defined by the `debateType` interface with:
 ## Page Specifications
 
 ### `/debates` - Debate Overview
+
 Displays all active debates showing the current state of public opinion.
 
 **Components per DebateCard**:
+
 - Debate title
 - Debate image (provided when debate is created)
 - Current state of the debate (Yes/No split, e.g. 68% Yes)
@@ -88,6 +95,7 @@ Displays all active debates showing the current state of public opinion.
 - Clickable → navigates to debate details
 
 **Design Notes**:
+
 - Clean, browser-first layout
 - Focus on debate content, not financial metrics
 - Clear Yes/No visual indicators
@@ -96,9 +104,11 @@ Displays all active debates showing the current state of public opinion.
 - **No market-style graphs or trading indicators**
 
 ### `/debates/[opinionId]` - Debate Details
+
 Deep dive into one debate. Users can view opinion history and voice their stance.
 
 **Components**:
+
 - **Title & optional description**
 - **Debate image** (provided when debate was created)
 - **Opinion timeline** (showing how sentiment has evolved)
@@ -123,15 +133,18 @@ Deep dive into one debate. Users can view opinion history and voice their stance
   - Scrollable
 
 **Implementation Notes**:
+
 - Focus on opinion expression, not profit/loss
 - Show community reasoning and comments
 - Update local state when opinions are voiced
 - Emphasis on debate participation over financial metrics
 
 ### `/create` - Create Debate
+
 Users can submit a new debate topic. All users are allowed to create debates.
 
 **Components**:
+
 - Input for debate question
 - Optional description/context
 - **Image upload** for debate visualization
@@ -147,9 +160,11 @@ Users can submit a new debate topic. All users are allowed to create debates.
 - "Should meat be banned in cities?"
 
 ### Mock Data
+
 Currently uses `mockDebates` array in `src/app/mockData.ts` for development. Debates include political, social, and technology topics.
 
 ## Key Features
+
 1. **Debate Discovery**: Browse active debates and see public sentiment
 2. **Debate Creation**: Create new debates with questions, descriptions, and images
 3. **Opinion Expression**: Voice your stance with financial backing and optional comments
@@ -160,9 +175,11 @@ Currently uses `mockDebates` array in `src/app/mockData.ts` for development. Deb
 ## Implementation Notes
 
 ### Mock Data Storage
+
 For the MVP, all debate and user data will be stored in a frontend struct (in-memory, not persistent between reloads).
 
 ### Technical Stack
+
 - Uses Next.js App Router with TypeScript strict mode
 - Path alias `@/*` configured for `./src/*`
 - Tailwind CSS configured with PostCSS
@@ -172,6 +189,7 @@ For the MVP, all debate and user data will be stored in a frontend struct (in-me
 - Deployment on Vercel
 
 ### Development Notes
+
 - Color palette and styling are left to developer discretion
 - Modern, clean, and browser-first design is encouraged
 - AMM logic simulated using constant product model
