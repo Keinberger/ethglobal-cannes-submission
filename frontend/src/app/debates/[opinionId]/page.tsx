@@ -19,12 +19,12 @@ export default function DebateDetailsPage() {
         {/* Main Layout Grid - Browser First */}
         <div className="grid grid-cols-12 gap-6 h-[calc(100vh-200px)]">
           {/* Left Column - Header + Opinion Timeline (Expanded) */}
-          <div className="col-span-8 space-y-20">
+          <div className="col-span-8 space-y-5">
             <DebateHeader debate={debate}/>
             <OpinionTimeline trend={debate.trend} />
           </div>
           {/* Right Column - Opinion Stream + Opinion Card*/}
-          <div className="col-span-4 space-y-6">
+          <div className="col-span-4 space-y-5">
             <OpinionStream opinions={debate.opinionStream || []} />
             <OpinionCard />
           </div>

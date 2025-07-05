@@ -1,4 +1,4 @@
-# Opinionmeter
+# Opinionmarket
 
 ## Getting Started
 
