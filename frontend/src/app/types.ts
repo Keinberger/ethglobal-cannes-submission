@@ -21,3 +21,11 @@ export type debateType = {
   lastUpdated: string;
   opinionStream?: opinionType[];
 };
+
+export type HistoricalPrice = {
+  upPriceUSD: number; // USD value of 1 UP token
+  timestamp: number;
+  formattedDate: string; // Formatted date for charts (e.g., "2024-01-15 14:30:25")
+  blockNumber: bigint;
+  swapBlockNumber: bigint; // The block where the swap happened
+}
