@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { usePrivy, useSign7702Authorization, useWallets } from '@privy-io/react-auth';
-// import { useSetActiveWallet } from '@privy-io/wagmi'; // Not needed for this implementation
+import { useSetActiveWallet } from '@privy-io/wagmi'; // Not needed for this implementation
 import { useWalletClient } from 'wagmi';
 import { createPublicClient, createWalletClient, http, zeroAddress, encodeFunctionData, custom } from 'viem';
 import { sepolia } from 'viem/chains';
@@ -27,6 +27,7 @@ export default function DebugPage() {
   const [contractTestResult, setContractTestResult] = useState<string>('');
   const [currentChainId, setCurrentChainId] = useState<number | null>(null);
   const [txHash, setTxHash] = useState<string | null>(null);
+  const {setActiveWallet} = useSetActiveWallet();
 
   const embeddedWallet = useMemo(
     () => wallets.find((wallet) => wallet.walletClientType === 'privy'),
@@ -36,8 +37,9 @@ export default function DebugPage() {
   useEffect(() => {
     if (embeddedWallet) {
       checkCurrentChain();
+      setActiveWallet(embeddedWallet);
     }
-  }, [embeddedWallet]);
+  }, [embeddedWallet, setActiveWallet]);
 
   const checkCurrentChain = async () => {
     if (!embeddedWallet) return;
@@ -127,7 +129,7 @@ export default function DebugPage() {
           account: embeddedWallet.address as `0x${string}`,
           chain: sepolia,
           transport: custom(provider),
-        });
+        }) as any;
         console.log('Using manual wallet client for SmartVoter');
       }
 
@@ -137,7 +139,7 @@ export default function DebugPage() {
           address: entryPoint08Address,
           version: '0.8'
         },
-        client: publicClient,
+        client: publicClient as any,
         address: activeWalletClient.account.address
       });
 
@@ -154,6 +156,8 @@ export default function DebugPage() {
         }
       });
 
+      console.log("crafted smart account client", smartAccountClient);
+
       setAuthorizationStatus('Signing EIP-7702 authorization...');
 
       // Sign the EIP-7702 authorization for the SmartVoter contract
@@ -169,36 +173,36 @@ export default function DebugPage() {
 
       setAuthorizationStatus('Sending EIP-7702 UserOperation...');
 
-      // Create the calldata for the enterMarket function
-      const calldata = encodeFunctionData({
-        abi: smartVoterAbi.abi,
-        functionName: 'enterMarket',
-        args: [
-          USDC_CONTRACT_ADDRESS,
-          LIQUIDITY_ENGINE_CONTRACT_ADDRESS,
-          AMM_CONTRACT_ADDRESS,
-          true,                     // up
-          100n * 10n**6n,           // 100 USDC (6 decimals)
-          90n * 10n**18n            // min 90 tokens (18 decimals)
-        ],
-      });
+      // // Create the calldata for the enterMarket function
+      // const calldata = encodeFunctionData({
+      //   abi: smartVoterAbi.abi,
+      //   functionName: 'enterMarket',
+      //   args: [
+      //     USDC_CONTRACT_ADDRESS,
+      //     LIQUIDITY_ENGINE_CONTRACT_ADDRESS,
+      //     AMM_CONTRACT_ADDRESS,
+      //     true,                     // up
+      //     100n * 10n**6n,           // 100 USDC (6 decimals)
+      //     0n           // min 90 tokens (18 decimals)
+      //   ],
+      // });
 
-      // Send the EIP-7702 UserOperation
-      const txnHash = await smartAccountClient.sendTransaction({
-        calls: [
-          {
-            to: activeWalletClient.account.address, // Send to the user's address (now a smart contract proxy)
-            data: calldata,
-            value: BigInt(0)
-          }
-        ],
-        factory: '0x7702', // EIP-7702 factory identifier
-        factoryData: '0x',
-        paymasterContext: {
-          sponsorshipPolicyId: process.env.NEXT_PUBLIC_SPONSORSHIP_POLICY_ID
-        },
-        authorization
-      });
+      // // Send the EIP-7702 UserOperation
+      // const txnHash = await smartAccountClient.sendTransaction({
+      //   calls: [
+      //     {
+      //       to: activeWalletClient.account.address, // Send to the user's address (now a smart contract proxy)
+      //       data: calldata,
+      //       value: 0n
+      //     }
+      //   ],
+      //   factory: '0x7702', // EIP-7702 factory identifier
+      //   factoryData: '0x',
+      //   paymasterContext: {
+      //     sponsorshipPolicyId: process.env.NEXT_PUBLIC_SPONSORSHIP_POLICY_ID
+      //   },
+      //   authorization
+      // });
 
       setTxHash(txnHash);
       setAuthorizationStatus(`EIP-7702 transaction successful! Hash: ${txnHash}`);
@@ -258,33 +262,33 @@ export default function DebugPage() {
 
       const publicClient = createPublicClient({
         chain: sepolia,
-        transport: http('https://rpc.sepolia.org')
+        transport: http('https://sepolia.infura.io/v3/b738498f1f0c4d9b8f2e2012ec5f05a7')
       });
 
       const pimlicoClient = createPimlicoClient({
         transport: http(pimlicoUrl)
       });
 
-      // Use walletClient from Wagmi or create manually
-      let activeWalletClient = walletClient;
-      if (!activeWalletClient) {
-        const provider = await embeddedWallet.getEthereumProvider();
-        activeWalletClient = createWalletClient({
-          account: embeddedWallet.address as `0x${string}`,
-          chain: sepolia,
-          transport: custom(provider),
-        });
-        console.log('Using manual wallet client');
-      }
+      // // Use walletClient from Wagmi or create manually
+      // let activeWalletClient = walletClient;
+      // if (!activeWalletClient) {
+      //   const provider = await embeddedWallet.getEthereumProvider();
+      //   activeWalletClient = createWalletClient({
+      //     account: embeddedWallet.address as `0x${string}`,
+      //     chain: sepolia,
+      //     transport: custom(provider),
+      //   });
+      //   console.log('Using manual wallet client');
+      // }
 
       const simpleSmartAccount = await toSimpleSmartAccount({
-        owner: activeWalletClient,
+        owner: walletClient,
         entryPoint: {
           address: entryPoint08Address,
           version: '0.8'
         },
         client: publicClient,
-        address: activeWalletClient.account.address
+        address: walletClient.account.address
       });
 
       const smartAccountClient = createSmartAccountClient({
@@ -299,31 +303,54 @@ export default function DebugPage() {
         }
       });
 
+      console.log("crafted smart account client", smartAccountClient);
+
+      const nonce = await publicClient.getTransactionCount({
+        address: walletClient.account.address
+      })
+
       // Sign authorization for the simple account implementation
       const authorization = await signAuthorization({
-        contractAddress: '0xe6Cae83BdE06E4c305530e199D7217f42808555B', // Simple account implementation
+        contractAddress: '0x41d7A19804cA8B70E3a01595aF33eADa07C3D9bE', // Simple account implementation
         chainId: sepolia.id,
-        nonce: await publicClient.getTransactionCount({
-          address: activeWalletClient.account.address
-        })
+        nonce: nonce
       });
+
+      console.log("authorization", authorization);
+
+      const calldata = encodeFunctionData({
+        abi: smartVoterAbi.abi,
+        functionName: 'enterMarket',
+        args: [
+          USDC_CONTRACT_ADDRESS,
+          LIQUIDITY_ENGINE_CONTRACT_ADDRESS,
+          AMM_CONTRACT_ADDRESS,
+          true,                     // up
+          100n * 10n**6n,           // 100 USDC (6 decimals)
+          0n           // min 90 tokens (18 decimals)
+        ],
+      });
+
+      console.log("calldata", calldata);
 
       // Send a simple transaction to zero address
       const txnHash = await smartAccountClient.sendTransaction({
         calls: [
           {
-            to: zeroAddress,
-            data: '0x',
-            value: BigInt(0)
+            to: walletClient.account.address, // Send to the user's address (now a smart contract proxy)
+            data: calldata,
+            value: 0n
           }
         ],
-        factory: '0x7702',
+        factory: '0x7702', // EIP-7702 factory identifier
         factoryData: '0x',
         paymasterContext: {
           sponsorshipPolicyId: process.env.NEXT_PUBLIC_SPONSORSHIP_POLICY_ID
         },
         authorization
-      });
+      }) as any;
+
+      console.log("txnHash", txnHash);
 
       setContractTestResult(`Simple test successful! Hash: ${txnHash}`);
       
