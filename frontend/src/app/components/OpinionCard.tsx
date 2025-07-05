@@ -1,9 +1,11 @@
 'use client';
 
-import { useState } from 'react';
-import { useAccount } from 'wagmi';
+import { useState, useEffect } from 'react';
+import { useAccount, usePublicClient } from 'wagmi';
+import { sepolia } from 'viem/chains';
 import { usePrices } from '../hooks/usePrices';
 import { useEntermarket } from '../hooks/useEnterMarket';
+import { useExitMarket } from '../hooks/useExitMarket';
 
 export default function OpinionCard() {
   const { isConnected, address } = useAccount();
@@ -12,6 +14,8 @@ export default function OpinionCard() {
   const [amount, setAmount] = useState('');
   const [comment, setComment] = useState('');
   const [showComment, setShowComment] = useState(false);
+
+  const publicClient = usePublicClient({ chainId: sepolia.id });
 
   const { 
     historicalPrices, 
@@ -24,21 +28,84 @@ export default function OpinionCard() {
 
   const {
     enterMarket,
-    transactionState,
-    isPending,
-    isSuccess,
-    isError,
-    resetTransaction
+    transactionState: enterTransactionState,
+    isPending: isEnterPending,
+    isSuccess: isEnterSuccess,
+    isError: isEnterError,
+    resetTransaction: resetEnterTransaction,
+    hash: enterHash
   } = useEntermarket();
 
-  // Debug logging
-  console.log('=== usePrices Hook Debug ===');
-  console.log('Loading:', loading);
-  console.log('Error:', error);
-  console.log('Price count:', priceCount);
-  console.log('Latest UP price USD:', latestUpPriceUSD);
-  console.log('Historical prices:', historicalPrices);
-  console.log('===========================');
+  const {
+    exitMarket,
+    transactionState: exitTransactionState,
+    isPending: isExitPending,
+    isSuccess: isExitSuccess,
+    isError: isExitError,
+    resetTransaction: resetExitTransaction,
+    hash: exitHash
+  } = useExitMarket();
+
+  // Use the appropriate transaction state based on mode
+  const transactionState = mode === 'buy' ? enterTransactionState : exitTransactionState;
+  const isPending = mode === 'buy' ? isEnterPending : isExitPending;
+  const isSuccess = mode === 'buy' ? isEnterSuccess : isExitSuccess;
+  const isError = mode === 'buy' ? isEnterError : isExitError;
+  const hash = mode === 'buy' ? enterHash : exitHash;
+
+  // Function to refresh data after 2 blocks
+  const refreshAfterBlocks = async (transactionHash: string) => {
+    if (!publicClient) return;
+
+    try {
+      console.log('Waiting for 2 blocks after transaction:', transactionHash);
+      
+      // Get the current block number
+      const currentBlock = await publicClient.getBlockNumber();
+      const targetBlock = currentBlock + 2n;
+      
+      // Wait for 2 blocks to be mined
+      let attempts = 0;
+      const maxAttempts = 30; // Wait up to 30 attempts (about 5 minutes)
+      
+      const checkBlock = async () => {
+        const latestBlock = await publicClient.getBlockNumber();
+        
+        if (latestBlock >= targetBlock) {
+          console.log('2 blocks confirmed, refreshing data...');
+          // Refresh prices and balances
+          await fetchRecentPrices();
+          // Trigger a page refresh to update balances
+          window.location.reload();
+          return;
+        }
+        
+        attempts++;
+        if (attempts < maxAttempts) {
+          // Wait 10 seconds before checking again
+          setTimeout(checkBlock, 10000);
+        } else {
+          console.log('Timeout waiting for 2 blocks, refreshing anyway...');
+          await fetchRecentPrices();
+          window.location.reload();
+        }
+      };
+      
+      checkBlock();
+    } catch (error) {
+      console.error('Error in refreshAfterBlocks:', error);
+      // Fallback: refresh immediately
+      await fetchRecentPrices();
+      window.location.reload();
+    }
+  };
+
+  // Effect to trigger refresh after successful transaction
+  useEffect(() => {
+    if (isSuccess && hash) {
+      refreshAfterBlocks(hash);
+    }
+  }, [isSuccess, hash, publicClient, fetchRecentPrices]);
 
   // Use real prices from hook if available, otherwise fallback to mock
   const yesPrice = latestUpPriceUSD || 0.68;
@@ -57,29 +124,42 @@ export default function OpinionCard() {
     }
 
     try {
-      // Convert USD amount to USDC (6 decimals)
       const usdAmount = parseFloat(amount);
-      const usdcAmount = BigInt(Math.floor(usdAmount * 1e6)); // Convert to USDC with 6 decimals
-      // Determine if this is an UP or DOWN position
       const isUpPosition = stance === 'yes';
 
       console.log('Submitting opinion transaction:', {
         mode,
         stance,
         usdAmount,
-        usdcAmount: usdcAmount.toString(),
-        minAmountOut: 0n,
         isUpPosition,
         comment,
         address
       });
 
-      // Send the EIP-7702 transaction
-      await enterMarket({
-        usdcAmount,
-        minAmountOut: 0n,
-        up: isUpPosition,
-      });
+      if (mode === 'buy') {
+        // Convert USD amount to USDC (6 decimals) for buying
+        const usdcAmount = BigInt(Math.floor(usdAmount * 1e6));
+        
+        console.log('Buying position with USDC amount:', usdcAmount.toString());
+        
+        // Send the enterMarket transaction
+        await enterMarket({
+          usdcAmount,
+          minAmountOut: 0n,
+          up: isUpPosition,
+        });
+      } else {
+        // For selling, we need to convert USD amount to token amount (18 decimals)
+        const tokenAmount = BigInt(Math.floor(usdAmount * 1e18));
+        
+        console.log('Selling position with token amount:', tokenAmount.toString());
+      
+        // Send the exitMarket transaction
+        await exitMarket({
+          burnAmount: tokenAmount,
+          up: isUpPosition,
+        });
+      }
 
       console.log('Transaction submitted successfully');
       
@@ -95,6 +175,14 @@ export default function OpinionCard() {
     }
   };
 
+  const resetTransaction = () => {
+    if (mode === 'buy') {
+      resetEnterTransaction();
+    } else {
+      resetExitTransaction();
+    }
+  };
+
   // Handle transaction state changes
   const getButtonText = () => {
     if (!isConnected) {
@@ -102,11 +190,11 @@ export default function OpinionCard() {
     }
     
     if (isPending) {
-      return 'Submitting Opinion...';
+      return mode === 'buy' ? 'Submitting Opinion...' : 'Selling Position...';
     }
     
     if (isSuccess) {
-      return 'Opinion Submitted!';
+      return mode === 'buy' ? 'Opinion Submitted!' : 'Position Sold!';
     }
     
     if (isError) {

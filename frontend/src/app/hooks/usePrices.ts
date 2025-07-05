@@ -101,8 +101,6 @@ export function usePrices() {
         fromBlock = toBlock - 1000n; // Default to last 1000 blocks
       }
 
-      console.log(`Fetching SwapExecuted events from block ${fromBlock} to ${toBlock}`);
-
       // Fetch SwapExecuted events
       const logs = await publicClient.getContractEvents({
         address: AMM_CONTRACT_ADDRESS,
@@ -112,16 +110,12 @@ export function usePrices() {
         toBlock,
       });
 
-      console.log(`Found ${logs.length} SwapExecuted events`);
-
       // For each swap event, fetch price at block + 1
       const newPrices: HistoricalPrice[] = [];
       
       for (const log of logs) {
         const swapBlock = log.blockNumber;
         const priceBlock = swapBlock + 1n;
-        
-        console.log(`Fetching price at block ${priceBlock} (after swap at ${swapBlock})`);
         
         const priceData = await fetchPriceAtBlock(priceBlock);
         if (priceData) {
@@ -131,8 +125,6 @@ export function usePrices() {
 
       // Update state with new historical prices
       setHistoricalPrices(prev => [...prev, ...newPrices]);
-      console.log(`Added ${newPrices.length} new historical price points`);
-
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch historical prices');
       console.error('Error fetching historical prices:', err);
