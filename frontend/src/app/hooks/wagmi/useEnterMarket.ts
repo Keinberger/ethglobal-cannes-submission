@@ -1,11 +1,12 @@
 import { useState, useCallback, useEffect } from 'react';
-import { useAccount, useSendTransaction, useWaitForTransactionReceipt } from 'wagmi';
+import { useSendTransaction, usePrivy } from '@privy-io/react-auth';
 import { encodeFunctionData } from 'viem';
 import SmartVoter7702ABI from '../../contracts/SmartVoter7702.json';
 import { 
   AMM_CONTRACT_ADDRESS, 
   LIQUIDITY_ENGINE_CONTRACT_ADDRESS, 
-  USDC_CONTRACT_ADDRESS 
+  USDC_CONTRACT_ADDRESS,
+  SMART_VOTER_CONTRACT_ADDRESS
 } from '../../contracts/constants';
 
 export type EIP7702TransactionConfig = {
@@ -22,11 +23,12 @@ export type TransactionState = {
 };
 
 /**
- * Hook for sending EIP-7702 transactions using wagmi
- * Sends type 0x04 transactions to the EOA with encoded calldata for SmartVoter7702
+ * Hook for sending transactions to SmartVoter7702 contract using Privy
+ * Directly calls the enterMarket function on the contract
  */
-export function useEntermarket() {
-  const { address, isConnected } = useAccount();
+export function useEnterMarket() {
+  const { authenticated, user } = usePrivy();
+  const { sendTransaction } = useSendTransaction();
   const [transactionState, setTransactionState] = useState<TransactionState>({
     hash: null,
     status: 'idle',
@@ -34,76 +36,13 @@ export function useEntermarket() {
     receipt: null,
   });
 
-  const { sendTransaction, data: hash, isPending, error } = useSendTransaction();
-  
-  const { data: receipt, isSuccess, isError } = useWaitForTransactionReceipt({
-    hash,
-  });
-
-  // Update transaction state based on wagmi hooks
-  useEffect(() => {
-    if (isPending) {
-      setTransactionState(prev => ({
-        ...prev,
-        status: 'pending',
-        error: null,
-      }));
-    } else if (isSuccess && receipt) {
-      setTransactionState(prev => ({
-        ...prev,
-        status: 'success',
-        receipt,
-      }));
-    } else if (isError && error) {
-      setTransactionState(prev => ({
-        ...prev,
-        status: 'error',
-        error: error.message,
-      }));
-    }
-  }, [isPending, isSuccess, isError, receipt, error]);
-
-  // Update hash when available
-  useEffect(() => {
-    if (hash) {
-      setTransactionState(prev => ({
-        ...prev,
-        hash,
-      }));
-    }
-  }, [hash]);
-
   /**
-   * Encode the enterMarket function call for SmartVoter7702
-   */
-  const encodeEnterMarketCalldata = useCallback((config: EIP7702TransactionConfig): string => {
-    try {
-      const calldata = encodeFunctionData({
-        abi: SmartVoter7702ABI.abi,
-        functionName: 'enterMarket',
-        args: [
-          USDC_CONTRACT_ADDRESS,
-          LIQUIDITY_ENGINE_CONTRACT_ADDRESS,
-          AMM_CONTRACT_ADDRESS,
-          config.up,
-          config.usdcAmount,
-          config.minAmountOut,
-        ],
-      });
-
-      return calldata;
-    } catch (error) {
-      throw new Error(`Failed to encode enterMarket calldata: ${error instanceof Error ? error.message : 'Unknown error'}`);
-    }
-  }, []);
-
-  /**
-   * Send an EIP-7702 transaction to enter the market
-   * Sends transaction to EOA with encoded calldata for SmartVoter contract
+   * Send a transaction to enter the market
+   * Directly calls the SmartVoter7702 contract's enterMarket function using Privy
    */
   const enterMarket = useCallback(async (config: EIP7702TransactionConfig) => {
-    if (!isConnected || !address) {
-      throw new Error('Wallet not connected');
+    if (!authenticated) {
+      throw new Error('User not authenticated');
     }
 
     if (!sendTransaction) {
@@ -118,21 +57,37 @@ export function useEntermarket() {
         error: null,
       }));
 
-      // Encode the calldata for the SmartVoter enterMarket function
-      const calldata = encodeEnterMarketCalldata(config);
+      console.log('Sending enterMarket transaction to SmartVoter contract with params:', config);
 
-      // Prepare EIP-7702 transaction parameters
-      // Send to EOA (wallet address) with encoded calldata for SmartVoter
-      const transactionParams = {
-        to: address as `0x${string}`, // EOA address (wallet address)
-        data: calldata as `0x${string}`, // Encoded enterMarket function call
-        type: "eip7702"
-      };
+      // Encode the contract call
+      const calldata = encodeFunctionData({
+        abi: SmartVoter7702ABI.abi,
+        functionName: 'enterMarket',
+        args: [
+          USDC_CONTRACT_ADDRESS,
+          LIQUIDITY_ENGINE_CONTRACT_ADDRESS,
+          AMM_CONTRACT_ADDRESS,
+          config.up,
+          config.usdcAmount,
+          config.minAmountOut,
+        ],
+      });
 
-      console.log('Sending EIP-7702 enterMarket transaction with params:', transactionParams);
+      // Send transaction to the SmartVoter contract using Privy
+      const txResult = await sendTransaction({
+        to: SMART_VOTER_CONTRACT_ADDRESS,
+        data: calldata as `0x${string}`,
+        value: 0,
+      });
 
-      // Send the transaction
-      sendTransaction(transactionParams);
+      // Update state with transaction hash
+      setTransactionState(prev => ({
+        ...prev,
+        status: 'success',
+        hash: txResult.transactionHash,
+      }));
+
+      console.log('SmartVoter enterMarket transaction sent:', txResult);
 
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Transaction failed';
@@ -145,7 +100,7 @@ export function useEntermarket() {
 
       throw error;
     }
-  }, [isConnected, address, sendTransaction, encodeEnterMarketCalldata]);
+  }, [authenticated, user, sendTransaction]);
 
   /**
    * Reset transaction state
@@ -162,7 +117,7 @@ export function useEntermarket() {
   /**
    * Check if wallet is ready for transactions
    */
-  const isReady = isConnected && !!address && !!sendTransaction;
+  const isReady = authenticated && !!user && !!sendTransaction;
 
   return {
     // State
@@ -173,15 +128,14 @@ export function useEntermarket() {
     resetTransaction,
     
     // Utilities
-    encodeEnterMarketCalldata,
     isReady,
-    hasWallet: isConnected && !!address,
+    hasWallet: authenticated && !!user,
     
-    // Wagmi state
-    isPending,
-    isSuccess,
-    isError,
-    hash,
-    receipt,
+    // Transaction state
+    isPending: transactionState.status === 'pending',
+    isSuccess: transactionState.status === 'success',
+    isError: transactionState.status === 'error',
+    hash: transactionState.hash,
+    receipt: transactionState.receipt,
   };
 } 
