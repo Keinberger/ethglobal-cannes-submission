@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { usePrivy } from '@privy-io/react-auth';
+import { usePrices } from '../hooks/usePrices';
 
 export default function OpinionCard() {
   const { authenticated, login, ready } = usePrivy();
@@ -11,9 +12,27 @@ export default function OpinionCard() {
   const [comment, setComment] = useState('');
   const [showComment, setShowComment] = useState(false);
 
-  // Mock prices - in real app these would come from props
-  const yesPrice = 0.68;
-  const noPrice = 0.32;
+  const { 
+    historicalPrices, 
+    latestUpPriceUSD, 
+    loading, 
+    error, 
+    priceCount,
+    fetchRecentPrices 
+  } = usePrices();
+
+  // Debug logging
+  console.log('=== usePrices Hook Debug ===');
+  console.log('Loading:', loading);
+  console.log('Error:', error);
+  console.log('Price count:', priceCount);
+  console.log('Latest UP price USD:', latestUpPriceUSD);
+  console.log('Historical prices:', historicalPrices);
+  console.log('===========================');
+
+  // Use real prices from hook if available, otherwise fallback to mock
+  const yesPrice = latestUpPriceUSD || 0.68;
+  const noPrice = latestUpPriceUSD ? 1 - latestUpPriceUSD : 0.32;
 
   const handleSubmit = () => {
     if (!authenticated) {
@@ -125,6 +144,14 @@ export default function OpinionCard() {
           />
         )}
       </div>
+
+      {/* Debug Button for Testing */}
+      <button
+        onClick={fetchRecentPrices}
+        className="w-full px-4 py-2 bg-gray-500 text-white rounded-lg text-sm hover:bg-gray-600 transition-colors mb-2"
+      >
+        {loading ? 'Fetching Prices...' : 'Fetch Recent Prices (Debug)'}
+      </button>
 
       {/* Submit Button */}
       <button
