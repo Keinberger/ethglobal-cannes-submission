@@ -1,6 +1,10 @@
+'use client';
+
 import { useState } from 'react';
+import { usePrivy } from '@privy-io/react-auth';
 
 export default function OpinionCard() {
+  const { authenticated, login, ready } = usePrivy();
   const [mode, setMode] = useState<'buy' | 'sell'>('buy');
   const [stance, setStance] = useState<'yes' | 'no'>('yes');
   const [amount, setAmount] = useState('');
@@ -10,6 +14,17 @@ export default function OpinionCard() {
   // Mock prices - in real app these would come from props
   const yesPrice = 0.68;
   const noPrice = 0.32;
+
+  const handleSubmit = () => {
+    if (!authenticated) {
+      login();
+      return;
+    }
+
+    // Handle opinion submission for authenticated users
+    console.log('Opinion submitted:', { mode, stance, amount, comment });
+    // Reset form or handle success
+  };
 
   return (
     <div className="bg-white rounded-xl shadow-lg p-6 space-y-2">
@@ -113,12 +128,25 @@ export default function OpinionCard() {
 
       {/* Submit Button */}
       <button
+        onClick={handleSubmit}
         className={`w-full px-6 py-4 rounded-lg text-white font-semibold text-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all ${
-          mode === 'buy' ? 'bg-blue-600 hover:bg-blue-700' : 'bg-red-600 hover:bg-red-700'
+          !ready
+            ? 'bg-gray-400'
+            : !authenticated
+              ? 'bg-indigo-500 hover:indigo-800'
+              : mode === 'buy'
+                ? 'bg-blue-600 hover:bg-blue-700'
+                : 'bg-red-600 hover:bg-red-700'
         }`}
-        disabled={!amount || parseFloat(amount) <= 0}
+        disabled={!ready || (authenticated && (!amount || parseFloat(amount) <= 0))}
       >
-        {mode === 'buy' ? 'Voice Opinion' : 'Sell Position'}
+        {!ready
+          ? 'Loading...'
+          : !authenticated
+            ? 'Login to Voice Opinion'
+            : mode === 'buy'
+              ? 'Voice Opinion'
+              : 'Sell Position'}
       </button>
     </div>
   );
