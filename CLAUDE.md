@@ -88,7 +88,7 @@ Displays all active debates showing the current state of public opinion.
 - Clickable → navigates to debate details
 
 **Design Notes**:
-- Clean, mobile-first layout
+- Clean, browser-first layout
 - Focus on debate content, not financial metrics
 - Clear Yes/No visual indicators
 - Floating "Create Debate" button
@@ -108,15 +108,19 @@ Deep dive into one debate. Users can view opinion history and voice their stance
   - Live Yes/No ratio
   - Number of people who voiced opinions
   - Recent activity feed
-- **Opinion Box**:
-  - Choose Yes or No position
-  - Enter amount to back opinion
-  - Optional comment/reasoning
-  - "Voice Opinion" button
-- **Your Stance**:
-  - Current position
-  - Your comment/reasoning
-  - When you voiced your opinion
+- **Opinion Card**:
+  - Choose Buy or Sell
+  - Buy
+    - Choose Yes or No position
+    - Enter amount to back opinion
+    - Optional comment/reasoning
+    - "Voice Opinion" button
+  - Sell
+    - Enter amount to sell
+    - Option to select 25%, 50% or max
+- **Opinion Stream**:
+  - A twitch-like stream of all previous comments with the amount, position and user name
+  - Scrollable
 
 **Implementation Notes**:
 - Focus on opinion expression, not profit/loss
@@ -169,7 +173,7 @@ For the MVP, all debate and user data will be stored in a frontend struct (in-me
 
 ### Development Notes
 - Color palette and styling are left to developer discretion
-- Modern, clean, and mobile-first design is encouraged
+- Modern, clean, and browser-first design is encouraged
 - AMM logic simulated using constant product model
 - Chart updates on each trade transaction
 - All debate state will eventually be on-chain (mocked for MVP)
