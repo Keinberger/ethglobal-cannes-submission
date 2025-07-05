@@ -17,7 +17,7 @@ contract AMM is IAMM, ERC20, Ownable, ReentrancyGuard {
     IERC20 public immutable override upToken;
     IERC20 public immutable override downToken;
 
-    // Constants
+    // Constants & Immutables
     uint256 public constant override MAX_TRADE_SIZE = 10_000 * 1e18; // 10k tokens
     uint256 public constant override FEE_NUMERATOR = 30; // 0.3% fee (30/10000)
     uint256 public constant override FEE_DENOMINATOR = 10_000;
@@ -25,6 +25,7 @@ contract AMM is IAMM, ERC20, Ownable, ReentrancyGuard {
     // State variables
     uint256 public override upReserves;
     uint256 public override downReserves;
+    string public override ammName;
 
     /**
      * @dev Constructor
@@ -35,7 +36,8 @@ contract AMM is IAMM, ERC20, Ownable, ReentrancyGuard {
     constructor(
         address _upToken,
         address _downToken,
-        address _owner
+        address _owner,
+        string memory _name
     )
         ERC20("UP-DOWN LP Token", "UP-DOWN-LP")
         Ownable(_owner)
@@ -46,6 +48,7 @@ contract AMM is IAMM, ERC20, Ownable, ReentrancyGuard {
 
         upToken = IERC20(_upToken);
         downToken = IERC20(_downToken);
+        ammName = _name;
     }
 
     /**

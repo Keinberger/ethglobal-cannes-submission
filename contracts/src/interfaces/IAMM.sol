@@ -36,6 +36,7 @@ interface IAMM {
     function downToken() external view returns (IERC20);
     function upReserves() external view returns (uint256);
     function downReserves() external view returns (uint256);
+    function ammName() external view returns (string memory);
 
     // ============ SWAP FUNCTIONS ============
 
