@@ -1,12 +1,14 @@
 import { useState, useCallback, useEffect } from 'react';
-import { useAccount, useSendTransaction, useWaitForTransactionReceipt } from 'wagmi';
-import { encodeFunctionData } from 'viem';
+import { useAccount, useContractWrite, useWaitForTransactionReceipt } from 'wagmi';
+
 import SmartVoter7702ABI from '../contracts/SmartVoter7702.json';
 import { 
   AMM_CONTRACT_ADDRESS, 
   LIQUIDITY_ENGINE_CONTRACT_ADDRESS, 
-  USDC_CONTRACT_ADDRESS 
+  USDC_CONTRACT_ADDRESS,
+  SMART_VOTER_CONTRACT_ADDRESS
 } from '../contracts/constants';
+
 
 export type EIP7702TransactionConfig = {
   usdcAmount: bigint;
@@ -22,8 +24,8 @@ export type TransactionState = {
 };
 
 /**
- * Hook for sending EIP-7702 transactions using wagmi
- * Sends type 0x04 transactions to the EOA with encoded calldata for SmartVoter7702
+ * Hook for sending transactions to SmartVoter7702 contract
+ * Directly calls the enterMarket function on the contract
  */
 export function useEntermarket() {
   const { address, isConnected } = useAccount();
@@ -34,7 +36,8 @@ export function useEntermarket() {
     receipt: null,
   });
 
-  const { sendTransaction, data: hash, isPending, error } = useSendTransaction();
+  // Execute the contract write
+  const { writeContract, data: hash, isPending, error } = useContractWrite();
   
   const { data: receipt, isSuccess, isError } = useWaitForTransactionReceipt({
     hash,
@@ -74,11 +77,31 @@ export function useEntermarket() {
   }, [hash]);
 
   /**
-   * Encode the enterMarket function call for SmartVoter7702
+   * Send a transaction to enter the market
+   * Directly calls the SmartVoter7702 contract's enterMarket function
    */
-  const encodeEnterMarketCalldata = useCallback((config: EIP7702TransactionConfig): string => {
+  const enterMarket = useCallback(async (config: EIP7702TransactionConfig) => {
+    if (!isConnected || !address) {
+      throw new Error('Wallet not connected');
+    }
+
+    if (!writeContract) {
+      throw new Error('Write contract function not available');
+    }
+
     try {
-      const calldata = encodeFunctionData({
+      // Reset state
+      setTransactionState(prev => ({
+        ...prev,
+        status: 'pending',
+        error: null,
+      }));
+
+      console.log('Sending enterMarket transaction to SmartVoter contract with params:', config);
+
+      // Send the transaction
+      (writeContract as any)({
+        address: SMART_VOTER_CONTRACT_ADDRESS,
         abi: SmartVoter7702ABI.abi,
         functionName: 'enterMarket',
         args: [
@@ -91,49 +114,6 @@ export function useEntermarket() {
         ],
       });
 
-      return calldata;
-    } catch (error) {
-      throw new Error(`Failed to encode enterMarket calldata: ${error instanceof Error ? error.message : 'Unknown error'}`);
-    }
-  }, []);
-
-  /**
-   * Send an EIP-7702 transaction to enter the market
-   * Sends transaction to EOA with encoded calldata for SmartVoter contract
-   */
-  const enterMarket = useCallback(async (config: EIP7702TransactionConfig) => {
-    if (!isConnected || !address) {
-      throw new Error('Wallet not connected');
-    }
-
-    if (!sendTransaction) {
-      throw new Error('Send transaction function not available');
-    }
-
-    try {
-      // Reset state
-      setTransactionState(prev => ({
-        ...prev,
-        status: 'pending',
-        error: null,
-      }));
-
-      // Encode the calldata for the SmartVoter enterMarket function
-      const calldata = encodeEnterMarketCalldata(config);
-
-      // Prepare EIP-7702 transaction parameters
-      // Send to EOA (wallet address) with encoded calldata for SmartVoter
-      const transactionParams = {
-        to: address as `0x${string}`, // EOA address (wallet address)
-        data: calldata as `0x${string}`, // Encoded enterMarket function call
-        type: "eip7702"
-      };
-
-      console.log('Sending EIP-7702 enterMarket transaction with params:', transactionParams);
-
-      // Send the transaction
-      sendTransaction(transactionParams);
-
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Transaction failed';
       
@@ -145,7 +125,7 @@ export function useEntermarket() {
 
       throw error;
     }
-  }, [isConnected, address, sendTransaction, encodeEnterMarketCalldata]);
+  }, [isConnected, address, writeContract]);
 
   /**
    * Reset transaction state
@@ -162,7 +142,7 @@ export function useEntermarket() {
   /**
    * Check if wallet is ready for transactions
    */
-  const isReady = isConnected && !!address && !!sendTransaction;
+  const isReady = isConnected && !!address && !!writeContract;
 
   return {
     // State
@@ -173,7 +153,6 @@ export function useEntermarket() {
     resetTransaction,
     
     // Utilities
-    encodeEnterMarketCalldata,
     isReady,
     hasWallet: isConnected && !!address,
     
