@@ -3,6 +3,8 @@ import { Geist, Geist_Mono } from 'next/font/google';
 import './globals.css';
 import Image from 'next/image';
 import Link from 'next/link';
+import Providers from './providers';
+import LoginButton from './components/LoginButton';
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -22,8 +24,9 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
-        <header className="flex items-center px-4 py-4 bg-white shadow-sm z-20">
+      <body className={`${geistSans.variable} ${geistMono.variable} antialiased bg-gradient-to-br from-blue-50 via-white to-purple-50 min-h-screen`}>
+        <Providers>
+        <header className="flex items-center px-4 py-4 shadow-sm z-20">
           <Link href="/">
             <Image
               src="/opinionmarket.png"
@@ -35,11 +38,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             />
           </Link>
           <div className="flex-grow" />
-          <button className="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700 transition justify-end">
-            Login
-          </button>
+          <LoginButton />
         </header>
         {children}
+        </Providers>
       </body>
     </html>
   );
