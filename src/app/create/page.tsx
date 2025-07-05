@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react'
 
-export default function CreateMarketPage() {
+export default function CreateDebatesPage() {
   const [question, setQuestion] = useState('')
   const [description, setDescription] = useState('')
   // For now, assume user is logged in
