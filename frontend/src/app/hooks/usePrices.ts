@@ -1,6 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { useWallets } from '@privy-io/react-auth';
-import { createPublicClient, custom, http, PublicClient } from 'viem';
+import { usePublicClient } from 'wagmi';
 import { sepolia } from 'viem/chains';
 import { AMM_CONTRACT_ADDRESS } from '../contracts/constants';
 import AMM_ABI from '../contracts/AMM.json';
@@ -11,53 +10,22 @@ import { HistoricalPrice } from '../types';
  * at each swap block + 1 to track price changes over time
  */
 export function usePrices() {
-  const { wallets } = useWallets();
   const [historicalPrices, setHistoricalPrices] = useState<HistoricalPrice[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const [publicClient, setPublicClient] = useState<PublicClient | null>(null);
-
-  // Get the viem client from Privy
-  const primaryWallet = wallets.find((wallet) => wallet.walletClientType === 'privy');
-
-  // Extract the provider when wallet is available
-  useEffect(() => {
-    const setupClient = async () => {
-      if (primaryWallet?.getEthereumProvider) {
-        try {
-          const provider = await primaryWallet.getEthereumProvider();
-          const client = createPublicClient({
-            chain: sepolia,
-            transport: custom(provider),
-          }) as any;
-          setPublicClient(client);
-        } catch (error) {
-          console.error('Failed to setup Privy client:', error);
-          // Fallback to default client
-          const fallbackClient = createPublicClient({
-            chain: sepolia,
-            transport: http(),
-          }) as any;
-          setPublicClient(fallbackClient);
-        }
-      } else {
-        // Default client when no wallet
-        const defaultClient = createPublicClient({
-          chain: sepolia,
-          transport: http(),
-        }) as any;
-        setPublicClient(defaultClient);
-      }
-    };
-
-    setupClient();
-  }, [primaryWallet]);
+  // Use wagmi's public client
+  const publicClient = usePublicClient({ chainId: sepolia.id });
 
   /**
    * Fetch price data at a specific block number
    */
   const fetchPriceAtBlock = useCallback(async (blockNumber: bigint): Promise<HistoricalPrice | null> => {
+    if (!publicClient) {
+      console.error('No public client available');
+      return null;
+    }
+
     try {
       // Get block info for timestamp
       const block = await publicClient.getBlock({ blockNumber });
@@ -137,7 +105,7 @@ export function usePrices() {
 
       // Fetch SwapExecuted events
       const logs = await publicClient.getContractEvents({
-        address: AMM_CONTRACT_ADDRESS as unknown as `0x${string}`,
+        address: AMM_CONTRACT_ADDRESS,
         abi: AMM_ABI.abi,
         eventName: 'SwapExecuted',
         fromBlock,

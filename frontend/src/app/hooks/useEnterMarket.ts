@@ -1,12 +1,12 @@
 import { useState, useCallback, useEffect } from 'react';
 import { useAccount, useSendTransaction, useWaitForTransactionReceipt } from 'wagmi';
 import { encodeFunctionData } from 'viem';
-import SmartVoter7702ABI from '../../contracts/SmartVoter7702.json';
+import SmartVoter7702ABI from '../contracts/SmartVoter7702.json';
 import { 
   AMM_CONTRACT_ADDRESS, 
   LIQUIDITY_ENGINE_CONTRACT_ADDRESS, 
   USDC_CONTRACT_ADDRESS 
-} from '../../contracts/constants';
+} from '../contracts/constants';
 
 export type EIP7702TransactionConfig = {
   usdcAmount: bigint;

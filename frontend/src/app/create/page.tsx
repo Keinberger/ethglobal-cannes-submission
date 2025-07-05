@@ -1,14 +1,14 @@
 'use client';
 
 import React, { useState, useRef } from 'react';
-import { usePrivy } from '@privy-io/react-auth';
+import { useAccount } from 'wagmi';
 import Image from 'next/image';
 
 export default function CreateDebatesPage() {
-  const { authenticated, login, ready } = usePrivy();
+  const { isConnected } = useAccount();
   const [question, setQuestion] = useState('');
   const [description, setDescription] = useState('');
-  const [selectedImage, setSelectedImage] = useState<File | null>(null);
+  const [, setSelectedImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -36,8 +36,9 @@ export default function CreateDebatesPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!authenticated) {
-      login();
+    if (!isConnected) {
+      // The user will need to connect their wallet through RainbowKit's ConnectButton
+      console.log('User needs to connect wallet');
       return;
     }
 
@@ -194,22 +195,20 @@ export default function CreateDebatesPage() {
               {/* Submit Button */}
               <button
                 type="submit"
-                disabled={!question.trim() || isSubmitting || !ready}
+                disabled={!question.trim() || isSubmitting}
                 className={`w-full py-4 px-6 rounded-xl font-semibold text-lg text-white transition-all ${
-                  !question.trim() || isSubmitting || !ready
+                  !question.trim() || isSubmitting
                     ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                    : authenticated
-                      ? 'bg-indigo-500 hover:indigo-800 shadow-lg hover:shadow-xl'
-                      : 'bg-indigo-500 hover:indigo-800 shadow-lg hover:shadow-xl'
+                    : isConnected
+                      ? 'bg-indigo-500 hover:bg-indigo-600 shadow-lg hover:shadow-xl'
+                      : 'bg-indigo-500 hover:bg-indigo-600 shadow-lg hover:shadow-xl'
                 }`}
               >
-                {!ready
-                  ? 'Loading...'
-                  : isSubmitting
-                    ? 'Creating Debate...'
-                    : !authenticated
-                      ? 'Login to Create Debate'
-                      : 'Create Debate'}
+                {isSubmitting
+                  ? 'Creating Debate...'
+                  : !isConnected
+                    ? 'Connect Wallet to Create Debate'
+                    : 'Create Debate'}
               </button>
             </form>
           </div>
@@ -251,7 +250,7 @@ export default function CreateDebatesPage() {
             <div className="mt-6 p-4 bg-blue-50 rounded-xl">
               <h4 className="font-semibold text-blue-900 mb-2">💡 Tips for great debates:</h4>
               <ul className="text-sm text-blue-800 space-y-1">
-                <li>• Ask questions that don't have obvious answers</li>
+                <li>• Ask questions that don&apos;t have obvious answers</li>
                 <li>• Be respectful and considerate of all viewpoints</li>
                 <li>• Add context to help others understand the topic</li>
                 <li>• Use images to make your debate more engaging</li>

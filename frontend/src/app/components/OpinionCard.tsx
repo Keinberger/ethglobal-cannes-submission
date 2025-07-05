@@ -1,11 +1,12 @@
 'use client';
 
 import { useState } from 'react';
-import { usePrivy } from '@privy-io/react-auth';
+import { useAccount } from 'wagmi';
 import { usePrices } from '../hooks/usePrices';
+import { useEntermarket } from '../hooks/useEnterMarket';
 
 export default function OpinionCard() {
-  const { authenticated, login, ready } = usePrivy();
+  const { isConnected, address } = useAccount();
   const [mode, setMode] = useState<'buy' | 'sell'>('buy');
   const [stance, setStance] = useState<'yes' | 'no'>('yes');
   const [amount, setAmount] = useState('');
@@ -21,6 +22,15 @@ export default function OpinionCard() {
     fetchRecentPrices 
   } = usePrices();
 
+  const {
+    enterMarket,
+    transactionState,
+    isPending,
+    isSuccess,
+    isError,
+    resetTransaction
+  } = useEntermarket();
+
   // Debug logging
   console.log('=== usePrices Hook Debug ===');
   console.log('Loading:', loading);
@@ -34,19 +44,113 @@ export default function OpinionCard() {
   const yesPrice = latestUpPriceUSD || 0.68;
   const noPrice = latestUpPriceUSD ? 1 - latestUpPriceUSD : 0.32;
 
-  const handleSubmit = () => {
-    if (!authenticated) {
-      login();
+  const handleSubmit = async () => {
+    if (!isConnected) {
+      // The user will need to connect their wallet through RainbowKit's ConnectButton
+      console.log('User needs to connect wallet');
       return;
     }
 
-    // Handle opinion submission for authenticated users
-    console.log('Opinion submitted:', { mode, stance, amount, comment });
-    // Reset form or handle success
+    if (!amount || parseFloat(amount) <= 0) {
+      console.log('Invalid amount');
+      return;
+    }
+
+    try {
+      // Convert USD amount to USDC (6 decimals)
+      const usdAmount = parseFloat(amount);
+      const usdcAmount = BigInt(Math.floor(usdAmount * 1e6)); // Convert to USDC with 6 decimals
+      // Determine if this is an UP or DOWN position
+      const isUpPosition = stance === 'yes';
+
+      console.log('Submitting opinion transaction:', {
+        mode,
+        stance,
+        usdAmount,
+        usdcAmount: usdcAmount.toString(),
+        minAmountOut: 0n,
+        isUpPosition,
+        comment,
+        address
+      });
+
+      // Send the EIP-7702 transaction
+      await enterMarket({
+        usdcAmount,
+        minAmountOut: 0n,
+        up: isUpPosition,
+      });
+
+      console.log('Transaction submitted successfully');
+      
+      // Reset form on success
+      if (isSuccess) {
+        setAmount('');
+        setComment('');
+        setShowComment(false);
+      }
+
+    } catch (error) {
+      console.error('Failed to submit opinion:', error);
+    }
+  };
+
+  // Handle transaction state changes
+  const getButtonText = () => {
+    if (!isConnected) {
+      return 'Connect Wallet to Voice Opinion';
+    }
+    
+    if (isPending) {
+      return 'Submitting Opinion...';
+    }
+    
+    if (isSuccess) {
+      return 'Opinion Submitted!';
+    }
+    
+    if (isError) {
+      return 'Transaction Failed - Try Again';
+    }
+    
+    return mode === 'buy' ? 'Voice Opinion' : 'Sell Position';
+  };
+
+  const getButtonClass = () => {
+    if (!isConnected) {
+      return 'bg-indigo-500 hover:bg-indigo-600';
+    }
+    
+    if (isPending) {
+      return 'bg-gray-400 cursor-not-allowed';
+    }
+    
+    if (isSuccess) {
+      return 'bg-green-600 cursor-not-allowed';
+    }
+    
+    if (isError) {
+      return 'bg-red-600 hover:bg-red-700';
+    }
+    
+    return mode === 'buy' ? 'bg-blue-600 hover:bg-blue-700' : 'bg-red-600 hover:bg-red-700';
   };
 
   return (
     <div className="bg-white rounded-xl shadow-lg p-6 space-y-2">
+      {/* Transaction Status */}
+      {transactionState.status !== 'idle' && (
+        <div className={`p-3 rounded-lg text-sm font-medium ${
+          transactionState.status === 'pending' ? 'bg-blue-50 text-blue-700' :
+          transactionState.status === 'success' ? 'bg-green-50 text-green-700' :
+          'bg-red-50 text-red-700'
+        }`}>
+          {transactionState.status === 'pending' && 'Transaction pending...'}
+          {transactionState.status === 'success' && 'Transaction successful!'}
+          {transactionState.status === 'error' && `Transaction failed: ${transactionState.error}`}
+        </div>
+      )}
+
       {/* Compact Buy/Sell Toggle */}
       <div className="flex bg-gray-100 rounded-lg p-1 w-fit">
         <button
@@ -103,7 +207,7 @@ export default function OpinionCard() {
 
       {/* Amount Input */}
       <div className="space-y-3">
-        <label className="text-sm font-medium text-gray-700">Amount</label>
+        <label className="text-sm font-medium text-gray-700">Amount (USD)</label>
         <div className="relative">
           <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 text-lg">
             $
@@ -114,8 +218,12 @@ export default function OpinionCard() {
             onChange={(e) => setAmount(e.target.value)}
             placeholder="0"
             className="w-full pl-8 pr-4 py-3 text-xl border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            disabled={isPending}
           />
         </div>
+        <p className="text-xs text-gray-500">
+          This will be converted to USDC (6 decimals) for the transaction
+        </p>
       </div>
 
       {/* Comment Dropdown */}
@@ -123,6 +231,7 @@ export default function OpinionCard() {
         <button
           onClick={() => setShowComment(!showComment)}
           className="flex items-center justify-between w-full p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+          disabled={isPending}
         >
           <span className="text-sm font-medium text-gray-700">Add reasoning (optional)</span>
           <svg
@@ -141,6 +250,7 @@ export default function OpinionCard() {
             placeholder="Share why you feel this way..."
             rows={3}
             className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
+            disabled={isPending}
           />
         )}
       </div>
@@ -149,31 +259,28 @@ export default function OpinionCard() {
       <button
         onClick={fetchRecentPrices}
         className="w-full px-4 py-2 bg-gray-500 text-white rounded-lg text-sm hover:bg-gray-600 transition-colors mb-2"
+        disabled={isPending}
       >
         {loading ? 'Fetching Prices...' : 'Fetch Recent Prices (Debug)'}
       </button>
 
+      {/* Reset Transaction Button */}
+      {(isSuccess || isError) && (
+        <button
+          onClick={resetTransaction}
+          className="w-full px-4 py-2 bg-gray-300 text-gray-700 rounded-lg text-sm hover:bg-gray-400 transition-colors mb-2"
+        >
+          Reset Transaction State
+        </button>
+      )}
+
       {/* Submit Button */}
       <button
         onClick={handleSubmit}
-        className={`w-full px-6 py-4 rounded-lg text-white font-semibold text-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all ${
-          !ready
-            ? 'bg-gray-400'
-            : !authenticated
-              ? 'bg-indigo-500 hover:indigo-800'
-              : mode === 'buy'
-                ? 'bg-blue-600 hover:bg-blue-700'
-                : 'bg-red-600 hover:bg-red-700'
-        }`}
-        disabled={!ready || (authenticated && (!amount || parseFloat(amount) <= 0))}
+        className={`w-full px-6 py-4 rounded-lg text-white font-semibold text-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all ${getButtonClass()}`}
+        disabled={!isConnected || isPending || (isConnected && (!amount || parseFloat(amount) <= 0))}
       >
-        {!ready
-          ? 'Loading...'
-          : !authenticated
-            ? 'Login to Voice Opinion'
-            : mode === 'buy'
-              ? 'Voice Opinion'
-              : 'Sell Position'}
+        {getButtonText()}
       </button>
     </div>
   );
