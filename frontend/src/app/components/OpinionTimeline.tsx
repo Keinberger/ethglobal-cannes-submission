@@ -110,6 +110,7 @@ export default function OpinionTimeline({ trend, title = 'Opinion Timeline' }: P
                 if (payload.greenLine !== null) {
                   return (
                     <circle
+                      key={`green-dot-${payload.timeIndex}`}
                       cx={props.cx}
                       cy={props.cy}
                       r={4}
@@ -126,6 +127,7 @@ export default function OpinionTimeline({ trend, title = 'Opinion Timeline' }: P
                 if (payload.greenLine !== null) {
                   return (
                     <circle
+                      key={`green-active-dot-${payload.timeIndex}`}
                       cx={props.cx}
                       cy={props.cy}
                       r={6}
@@ -151,6 +153,7 @@ export default function OpinionTimeline({ trend, title = 'Opinion Timeline' }: P
                 if (payload.redLine !== null) {
                   return (
                     <circle
+                      key={`red-dot-${payload.timeIndex}`}
                       cx={props.cx}
                       cy={props.cy}
                       r={4}
@@ -167,6 +170,7 @@ export default function OpinionTimeline({ trend, title = 'Opinion Timeline' }: P
                 if (payload.redLine !== null) {
                   return (
                     <circle
+                      key={`red-active-dot-${payload.timeIndex}`}
                       cx={props.cx}
                       cy={props.cy}
                       r={6}
