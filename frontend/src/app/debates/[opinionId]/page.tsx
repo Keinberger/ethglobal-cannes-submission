@@ -14,7 +14,7 @@ export default function DebateDetailsPage() {
   if (!debate) return notFound();
 
   return (
-    <div className="min-h-screen bg-gray-50 p-4">
+    <div className="min-h-screen p-4">
       <div className="w-full mx-auto">
         {/* Main Layout Grid - Browser First */}
         <div className="grid grid-cols-12 gap-6 h-[calc(100vh-200px)]">

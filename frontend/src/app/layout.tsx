@@ -24,23 +24,25 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased bg-gradient-to-br from-blue-50 via-white to-purple-50 min-h-screen`}>
+      <body
+        className={`${geistSans.variable} ${geistMono.variable} antialiased bg-gradient-to-br from-blue-50 via-white to-purple-50 min-h-screen`}
+      >
         <Providers>
-        <header className="flex items-center px-4 py-4 shadow-sm z-20">
-          <Link href="/">
-            <Image
-              src="/opinionmarket.png"
-              width={100}
-              height={100}
-              alt="opinionmarket Logo"
-              className="h-8 w-auto mr-4"
-              priority
-            />
-          </Link>
-          <div className="flex-grow" />
-          <LoginButton />
-        </header>
-        {children}
+          <header className="flex items-center px-4 py-4 shadow-sm z-20">
+            <Link href="/">
+              <Image
+                src="/opinionmarket.png"
+                width={100}
+                height={100}
+                alt="opinionmarket Logo"
+                className="h-8 w-auto mr-4"
+                priority
+              />
+            </Link>
+            <div className="flex-grow" />
+            <LoginButton />
+          </header>
+          {children}
         </Providers>
       </body>
     </html>

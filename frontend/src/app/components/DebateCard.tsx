@@ -14,7 +14,13 @@ export default function DebateCard({ debate }: Props) {
     >
       {/* Debate Image */}
       <div className="relative w-full h-48">
-        <Image src={debate.image} alt={debate.title} fill className="object-cover" />
+        <Image
+          src={debate.image}
+          alt={debate.title}
+          fill
+          className="object-cover"
+          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+        />
       </div>
 
       {/* Content */}
