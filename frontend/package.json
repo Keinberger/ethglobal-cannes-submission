@@ -10,6 +10,7 @@
     "format": "prettier --write ."
   },
   "dependencies": {
+    "@privy-io/react-auth": "^2.17.3",
     "next": "15.3.5",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
