@@ -5,6 +5,7 @@
 First, run the development server:
 
 ```bash
+cd frontend
 npm install
 npm run dev
 ```
