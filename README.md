@@ -1,8 +1,4 @@
-# CLAUDE.md
-
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
-
-## Project Overview
+## OpinionMarket
 
 This is "The Opinion Market", a browser-based, on-chain platform that serves as a **source of truth for ongoing debates**. Users voice their opinions on global or controversial topics by staking capital to support their position. The platform is **focused on debate and opinion expression**, not trading or profit-making.
 
