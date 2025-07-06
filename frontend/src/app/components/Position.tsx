@@ -1,26 +1,37 @@
 'use client';
 
 import { useAccount } from 'wagmi';
-import { useTokenBalances } from '../hooks/useTokenBalances';
 import { usePrices } from '../hooks/usePrices';
-import { SMART_VOTER_CONTRACT_ADDRESS } from '../contracts/constants';
+import { TokenBalances } from '../hooks/useTokenBalances';
 
-export default function Position() {
+interface PositionProps {
+  balances: TokenBalances;
+  balancesLoading: boolean;
+  balancesError: string | null;
+}
+
+export default function Position({ balances, balancesLoading, balancesError }: PositionProps) {
   const { isConnected } = useAccount();
-  const { balances, loading: balancesLoading, error: balancesError } = useTokenBalances(SMART_VOTER_CONTRACT_ADDRESS);
   const { latestUpPriceUSD, loading: pricesLoading } = usePrices();
 
+
+
   // Calculate position values
-  const upPositionValue = latestUpPriceUSD ? Number(balances.up) / 1e18 * latestUpPriceUSD : 0;
-  const downPositionValue = latestUpPriceUSD ? Number(balances.down) / 1e18 * (1 - latestUpPriceUSD) : 0;
+  // latestUpPriceUSD is the USD value of 1 UP token
+  // For DOWN tokens: USD value = token balance * (1 - UP price) since UP + DOWN = 1 USD
+  const upPositionValue = latestUpPriceUSD ? Number(balances.up) / 1e18 * (latestUpPriceUSD * 2) : 0;
+  const downPositionValue = latestUpPriceUSD ? Number(balances.down) / 1e18 * ((1 - latestUpPriceUSD) * 2) : 0;
   const usdcBalanceUSD = Number(balances.usdc) / 1e6;
 
+
+
   const isLoading = balancesLoading || pricesLoading;
-  const hasUpPosition = Number(balances.up) > 0;
-  const hasDownPosition = Number(balances.down) > 0;
+  // Use a small threshold to avoid showing dust amounts (less than 0.000001 tokens)
+  const hasUpPosition = Number(balances.up) > 1e12; // 0.000001 tokens in wei
+  const hasDownPosition = Number(balances.down) > 1e12; // 0.000001 tokens in wei
   const hasAnyPosition = hasUpPosition || hasDownPosition;
 
-  if (!isConnected || (!hasAnyPosition && !isLoading)) {
+  if (!isConnected) {
     return null;
   }
 
@@ -37,10 +48,16 @@ export default function Position() {
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-2xl font-semibold text-gray-800">Your Position</h3>
         <div className="flex items-center gap-2 text-2xl text-blue-900 font-semibold">
-          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
-          </svg>
-          ${usdcBalanceUSD.toFixed(2)}
+          {isLoading ? (
+            <div className="text-sm text-gray-500">Loading...</div>
+          ) : (
+            <>
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+              </svg>
+              ${usdcBalanceUSD.toFixed(2)}
+            </>
+          )}
         </div>
       </div>
 
@@ -70,6 +87,14 @@ export default function Position() {
               </span>
             </div>
           )}
+        </div>
+      )}
+
+      {/* No positions message */}
+      {!hasAnyPosition && !isLoading && (
+        <div className="text-center text-gray-500 py-4">
+          <div className="text-sm">No active positions</div>
+          <div className="text-xs text-gray-400 mt-1">Place your first opinion to see your position here</div>
         </div>
       )}
     </div>

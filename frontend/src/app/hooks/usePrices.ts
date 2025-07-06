@@ -134,11 +134,37 @@ export function usePrices() {
   }, [publicClient, fetchPriceAtBlock]);
 
   /**
-   * Fetch recent historical prices (last 1000 blocks)
+   * Fetch current price and recent historical prices
    */
   const fetchRecentPrices = useCallback(async () => {
-    await fetchHistoricalPrices();
-  }, [fetchHistoricalPrices]);
+    if (!publicClient) return;
+
+    try {
+      console.log('Fetching current price data...');
+      
+      // First, fetch the current price
+      const currentBlock = await publicClient.getBlockNumber();
+      const currentPrice = await fetchPriceAtBlock(currentBlock);
+      
+      if (currentPrice) {
+        // Add current price to historical prices if it's not already there
+        setHistoricalPrices(prev => {
+          const exists = prev.some(p => p.blockNumber === currentPrice.blockNumber);
+          if (!exists) {
+            return [...prev, currentPrice];
+          }
+          return prev;
+        });
+      }
+      
+      // Then fetch historical prices
+      await fetchHistoricalPrices();
+      
+      console.log('Price data refreshed successfully');
+    } catch (error) {
+      console.error('Error fetching recent prices:', error);
+    }
+  }, [fetchHistoricalPrices, fetchPriceAtBlock, publicClient]);
 
   /**
    * Clear all historical price data

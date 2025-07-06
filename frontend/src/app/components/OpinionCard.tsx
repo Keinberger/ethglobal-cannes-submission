@@ -1,15 +1,18 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useAccount, usePublicClient } from 'wagmi';
-import { sepolia } from 'viem/chains';
+import { useAccount } from 'wagmi';
 import { usePrices } from '../hooks/usePrices';
 import { useEntermarket } from '../hooks/useEnterMarket';
 import { useExitMarket } from '../hooks/useExitMarket';
-import { useTokenBalances } from '../hooks/useTokenBalances';
-import { SMART_VOTER_CONTRACT_ADDRESS } from '../contracts/constants';
+import { TokenBalances } from '../hooks/useTokenBalances';
 
-export default function OpinionCard() {
+interface OpinionCardProps {
+  balances: TokenBalances;
+  refetchBalances: () => Promise<void>;
+}
+
+export default function OpinionCard({ balances, refetchBalances }: OpinionCardProps) {
   const { isConnected, address } = useAccount();
   const [mode, setMode] = useState<'buy' | 'sell'>('buy');
   const [stance, setStance] = useState<'yes' | 'no'>('yes');
@@ -17,24 +20,13 @@ export default function OpinionCard() {
   const [comment, setComment] = useState('');
   const [showComment, setShowComment] = useState(false);
 
-  // Get user's token balances
-  const { balances } = useTokenBalances(SMART_VOTER_CONTRACT_ADDRESS);
-  console.log(balances);
-
-  const publicClient = usePublicClient({ chainId: sepolia.id });
-
   const { 
-    historicalPrices, 
     latestUpPriceUSD, 
-    loading, 
-    error, 
-    priceCount,
     fetchRecentPrices 
   } = usePrices();
 
   const {
     enterMarket,
-    transactionState: enterTransactionState,
     isPending: isEnterPending,
     isSuccess: isEnterSuccess,
     isError: isEnterError,
@@ -44,7 +36,6 @@ export default function OpinionCard() {
 
   const {
     exitMarket,
-    transactionState: exitTransactionState,
     isPending: isExitPending,
     isSuccess: isExitSuccess,
     isError: isExitError,
@@ -53,80 +44,45 @@ export default function OpinionCard() {
   } = useExitMarket();
 
   // Use the appropriate transaction state based on mode
-  const transactionState = mode === 'buy' ? enterTransactionState : exitTransactionState;
   const isPending = mode === 'buy' ? isEnterPending : isExitPending;
   const isSuccess = mode === 'buy' ? isEnterSuccess : isExitSuccess;
   const isError = mode === 'buy' ? isEnterError : isExitError;
   const hash = mode === 'buy' ? enterHash : exitHash;
 
   // Function to refresh data after 2 blocks
-  const refreshAfterBlocks = async (transactionHash: string) => {
-    if (!publicClient) return;
 
-    try {
-      console.log('Waiting for 2 blocks after transaction:', transactionHash);
-      
-      // Get the current block number
-      const currentBlock = await publicClient.getBlockNumber();
-      const targetBlock = currentBlock + 2n;
-      
-      // Wait for 2 blocks to be mined
-      let attempts = 0;
-      const maxAttempts = 30; // Wait up to 30 attempts (about 5 minutes)
-      
-      const checkBlock = async () => {
-        const latestBlock = await publicClient.getBlockNumber();
-        
-        if (latestBlock >= targetBlock) {
-          console.log('2 blocks confirmed, refreshing data...');
-          // Refresh prices and balances
-          await fetchRecentPrices();
-          // Trigger a page refresh to update balances
-          window.location.reload();
-          return;
-        }
-        
-        attempts++;
-        if (attempts < maxAttempts) {
-          // Wait 10 seconds before checking again
-          setTimeout(checkBlock, 10000);
-        } else {
-          console.log('Timeout waiting for 2 blocks, refreshing anyway...');
-          await fetchRecentPrices();
-          window.location.reload();
-        }
-      };
-      
-      checkBlock();
-    } catch (error) {
-      console.error('Error in refreshAfterBlocks:', error);
-      // Fallback: refresh immediately
-      await fetchRecentPrices();
-      window.location.reload();
-    }
-  };
 
-  // Effect to trigger refresh after successful transaction
+  // Effect to handle transaction completion and refresh data
   useEffect(() => {
     if (isSuccess && hash) {
-      refreshAfterBlocks(hash);
+      console.log('Transaction successful, refreshing data...');
+      
+      // Immediately refresh data when transaction is mined
+      fetchRecentPrices();
+      refetchBalances();
+      
+      // Reset transaction state after a short delay
+      setTimeout(() => {
+        resetTransaction();
+      }, 2000);
     }
-  }, [isSuccess, hash, publicClient, fetchRecentPrices]);
+  }, [isSuccess, hash, fetchRecentPrices, refetchBalances]);
 
   // Use real prices from hook if available, otherwise fallback to mock
   const yesPrice = latestUpPriceUSD || 0.68;
   const noPrice = latestUpPriceUSD ? 1 - latestUpPriceUSD : 0.32;
 
   // Calculate position values for percentage buttons
+  // Since 1 UP + 1 DOWN = 2 USDC, we need to convert the ratio to actual USD value
   const calculatePositionValue = () => {
     if (!latestUpPriceUSD) return 0;
     
     if (stance === 'yes') {
-      // UP position value = UP tokens * UP price
-      return Number(balances.up) / 1e18 * latestUpPriceUSD;
+      // UP position value = UP tokens * (UP ratio * 2 USDC)
+      return Number(balances.up) / 1e18 * latestUpPriceUSD * 2;
     } else {
-      // DOWN position value = DOWN tokens * DOWN price  
-      return Number(balances.down) / 1e18 * (1 - latestUpPriceUSD);
+      // DOWN position value = DOWN tokens * (DOWN ratio * 2 USDC)
+      return Number(balances.down) / 1e18 * (1 - latestUpPriceUSD) * 2;
     }
   };
 
@@ -134,8 +90,26 @@ export default function OpinionCard() {
 
   // Handle percentage button clicks
   const handlePercentageClick = (percentage: number) => {
-    const targetAmount = (positionValue * percentage / 100).toFixed(2);
-    setAmount(targetAmount);
+    if (percentage === 100) {
+      // For 100%, use the exact token balance to avoid dust
+      if (stance === 'yes') {
+        // UP position: convert UP tokens to USD value
+        const upTokens = Number(balances.up) / 1e18;
+        const upRatio = latestUpPriceUSD || 0.68;
+        const exactUSDValue = upTokens * upRatio * 2; // Convert ratio to USD (1 UP + 1 DOWN = 2 USDC)
+        setAmount(exactUSDValue.toString());
+      } else {
+        // DOWN position: convert DOWN tokens to USD value
+        const downTokens = Number(balances.down) / 1e18;
+        const downRatio = latestUpPriceUSD ? 1 - latestUpPriceUSD : 0.32;
+        const exactUSDValue = downTokens * downRatio * 2; // Convert ratio to USD (1 UP + 1 DOWN = 2 USDC)
+        setAmount(exactUSDValue.toString());
+      }
+    } else {
+      // For other percentages, use the calculated position value
+      const targetAmount = (positionValue * percentage / 100).toFixed(2);
+      setAmount(targetAmount);
+    }
   };
 
   const handleSubmit = async () => {
@@ -176,10 +150,30 @@ export default function OpinionCard() {
           up: isUpPosition,
         });
       } else {
-        // For selling, we need to convert USD amount to token amount (18 decimals)
-        const tokenAmount = BigInt(Math.floor(usdAmount * 1e18));
+        // For selling, we need to convert USD amount to token amount based on current price
+        let tokenAmount: bigint;
+        let tokenAmountFloat: number;
         
-        console.log('Selling position with token amount:', tokenAmount.toString());
+        if (isUpPosition) {
+          // Selling UP tokens: USD amount / (UP ratio * 2 USDC)
+          const upRatio = latestUpPriceUSD || 0.68;
+          tokenAmountFloat = usdAmount / (upRatio * 2);
+          tokenAmount = BigInt(Math.floor(tokenAmountFloat * 1e18));
+        } else {
+          // Selling DOWN tokens: USD amount / (DOWN ratio * 2 USDC)
+          const downRatio = latestUpPriceUSD ? 1 - latestUpPriceUSD : 0.32;
+          tokenAmountFloat = usdAmount / (downRatio * 2);
+          tokenAmount = BigInt(Math.floor(tokenAmountFloat * 1e18));
+        }
+        
+        console.log('Selling position - Token conversion:', {
+          usdAmount,
+          isUpPosition,
+          currentRatio: isUpPosition ? (latestUpPriceUSD || 0.68) : (latestUpPriceUSD ? 1 - latestUpPriceUSD : 0.32),
+          tokenAmountFloat,
+          tokenAmountRaw: tokenAmount.toString(),
+          tokenAmountFormatted: (Number(tokenAmount) / 1e18).toFixed(6)
+        });
       
         // Send the exitMarket transaction
         await exitMarket({
@@ -213,15 +207,15 @@ export default function OpinionCard() {
   // Handle transaction state changes
   const getButtonText = () => {
     if (!isConnected) {
-      return 'Connect Wallet to Voice Opinion';
+      return 'Voice Opinion';
     }
     
     if (isPending) {
-      return mode === 'buy' ? 'Submitting Opinion...' : 'Selling Position...';
+      return 'Submitting...';
     }
     
     if (isSuccess) {
-      return mode === 'buy' ? 'Opinion Submitted!' : 'Position Sold!';
+      return mode === 'buy' ? 'Voice Opinion' : 'Sell Position';
     }
     
     if (isError) {
@@ -241,7 +235,7 @@ export default function OpinionCard() {
     }
     
     if (isSuccess) {
-      return 'bg-green-600 cursor-not-allowed';
+      return mode === 'buy' ? 'bg-blue-600 hover:bg-blue-700' : 'bg-red-600 hover:bg-red-700';
     }
     
     if (isError) {
@@ -253,18 +247,6 @@ export default function OpinionCard() {
 
   return (
     <div className="bg-white rounded-xl shadow-lg p-6 space-y-2">
-      {/* Transaction Status */}
-      {transactionState.status !== 'idle' && (
-        <div className={`p-3 rounded-lg text-sm ${
-          transactionState.status === 'pending' ? 'bg-blue-50 text-blue-700' :
-          transactionState.status === 'success' ? 'bg-green-50 text-green-700' :
-          'bg-red-50 text-red-700'
-        }`}>
-          {transactionState.status === 'pending' && 'Transaction pending...'}
-          {transactionState.status === 'success' && 'Transaction successful!'}
-          {transactionState.status === 'error' && `Transaction failed: ${transactionState.error}`}
-        </div>
-      )}
 
       {/* Compact Buy/Sell Toggle */}
       <div className="flex bg-gray-100 rounded-lg p-1 w-fit">
@@ -341,7 +323,7 @@ export default function OpinionCard() {
         {mode === 'sell' && (
           <div className="space-y-2">
             <div className="text-xs text-gray-500">
-              Available position: ${positionValue.toFixed(2)}
+              Available position: ${(positionValue).toFixed(2)}
             </div>
             <div className="flex gap-2">
               <button
@@ -400,15 +382,7 @@ export default function OpinionCard() {
         )}
       </div>)}
 
-      {/* Reset Transaction Button */}
-      {(isSuccess || isError) && (
-        <button
-          onClick={resetTransaction}
-          className="w-full px-4 py-2 bg-gray-300 text-gray-700 rounded-lg text-sm hover:bg-gray-400 transition-colors mb-2"
-        >
-          Reset Transaction State
-        </button>
-      )}
+
 
       {/* Submit Button */}
       <button
