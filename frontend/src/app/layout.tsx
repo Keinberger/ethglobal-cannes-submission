@@ -28,7 +28,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         className={`${geistSans.variable} ${geistMono.variable} min-h-screen`}
       >
         <Providers>
-          <header className="flex items-center px-4 py-4 shadow-sm z-20">
+          <header className="flex items-center px-4 py-4 shadow-lg z-20 bg-white">
             <Link href="/">
               <Image
                 src="/opinionmarket.png"
@@ -42,7 +42,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <div className="flex-grow" />
             <LoginButton />
           </header>
-          <div className='bg-gradient-to-br from-slate-100 via-white to-purple-100'>
+          <div className='bg-gradient-to-br from-slate-100 to-purple-100'>
             {children}
           </div>
         </Providers>
