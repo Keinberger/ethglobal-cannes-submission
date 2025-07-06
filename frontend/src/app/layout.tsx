@@ -25,7 +25,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased bg-gradient-to-br from-blue-50 via-white to-purple-50 min-h-screen`}
+        className={`${geistSans.variable} ${geistMono.variable} min-h-screen`}
       >
         <Providers>
           <header className="flex items-center px-4 py-4 shadow-sm z-20">
@@ -42,7 +42,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <div className="flex-grow" />
             <LoginButton />
           </header>
-          {children}
+          <div className='bg-gradient-to-br from-slate-100 via-white to-purple-100'>
+            {children}
+          </div>
         </Providers>
       </body>
     </html>
