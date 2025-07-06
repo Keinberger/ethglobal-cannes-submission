@@ -416,7 +416,7 @@ export default function DebateOverview({ debate, useRealData = false }: Props) {
   };
 
   return (
-    <div className="rounded-xl shadow-lg p-6">
+    <div className="rounded-xl shadow-lg p-6 bg-white">
       {/* Header Section */}
       <div className="flex items-start gap-4 mb-6">
         <div className="relative w-16 h-16 flex-shrink-0">
@@ -429,7 +429,7 @@ export default function DebateOverview({ debate, useRealData = false }: Props) {
           />
         </div>
         <div className="flex-1">
-          <h1 className="text-6xl font-bold text-gray-900 mb-1">{debate.title}</h1>
+          <h1 className="text-4xl font-bold text-gray-900 mb-1">{debate.title}</h1>
           {/* Compact Progress Bar */}
           <div className="my-8">
             <div className="flex items-center justify-between text-gray-600 mb-1">

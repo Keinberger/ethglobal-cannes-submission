@@ -53,6 +53,7 @@ export function useTokenBalances(address?: `0x${string}`) {
       return;
     }
 
+    console.log('Fetching token balances for address:', address);
     setLoading(true);
     setError(null);
 
@@ -86,13 +87,20 @@ export function useTokenBalances(address?: `0x${string}`) {
       const upFormatted = (Number(upBalance) / 1e18).toFixed(4);
       const downFormatted = (Number(downBalance) / 1e18).toFixed(4);
 
-      setBalances({
+      const newBalances = {
         usdc: usdcBalance,
         up: upBalance,
         down: downBalance,
         usdcFormatted,
         upFormatted,
         downFormatted,
+      };
+
+      setBalances(newBalances);
+      console.log('Token balances updated:', {
+        usdc: usdcFormatted,
+        up: upFormatted,
+        down: downFormatted
       });
 
     } catch (err) {
