@@ -1,6 +1,8 @@
 ## 🧠 OpinionMarket
 
-This is "The Opinion Market", a browser-based, on-chain platform that serves as a **source of truth for ongoing debates**. Users voice their opinions on global or controversial topics by staking capital to support their position. There's no resolution or final outcome - debates are continuous and reflect the **real-time weight of global belief**. The financial mechanism ensures opinions have weight and conviction behind them.
+This is "The Opinion Market", a browser-based, on-chain platform that serves as a **source of truth for ongoing debates**. Users voice their opinions on global or controversial topics by staking capital to support their position.
+
+There's no resolution or final outcome - debates are continuous and reflect the **real-time weight of global belief**. The financial mechanism ensures opinions have weight and conviction behind them.
 
 ## Development Commands
 
