@@ -1,3 +1,4 @@
+import Image from 'next/image';
 import {
   LineChart,
   Line,
@@ -7,20 +8,22 @@ import {
   Tooltip,
   ReferenceLine,
 } from 'recharts';
+import { debateType } from '../types';
 import { usePrices } from '../hooks/usePrices';
 
 type Props = {
-  title?: string;
+  debate: debateType;
 };
 
-export default function OpinionTimeline({ title = 'UP Token Price Timeline' }: Props) {
+export default function DebateOverview({ debate }: Props) {
   const { historicalPrices, loading, error } = usePrices();
 
   // Create base data points from historical prices
   const baseData = historicalPrices.map((price, index) => {
     const percentage = price.upPriceUSD * 100; // Convert to percentage
+    const hoursAgo = historicalPrices.length - index;
     return {
-      time: price.formattedDate,
+      time: `${hoursAgo}h ago`,
       timeIndex: index,
       percentage: percentage,
       greenLine: percentage >= 50 ? percentage : null,
@@ -60,44 +63,33 @@ export default function OpinionTimeline({ title = 'UP Token Price Timeline' }: P
     }
   }
 
-  // Handle loading and error states
-  if (loading) {
-    return (
-      <div className="bg-white rounded-xl shadow p-6 flex-1">
-        <h3 className="text-lg font-semibold text-gray-800 mb-4">{title}</h3>
-        <div className="h-80 flex items-center justify-center">
+  const renderChart = () => {
+    if (loading) {
+      return (
+        <div className="h-64 flex items-center justify-center">
           <div className="text-gray-500">Loading price data...</div>
         </div>
-      </div>
-    );
-  }
+      );
+    }
 
-  if (error) {
-    return (
-      <div className="bg-white rounded-xl shadow p-6 flex-1">
-        <h3 className="text-lg font-semibold text-gray-800 mb-4">{title}</h3>
-        <div className="h-80 flex items-center justify-center">
+    if (error) {
+      return (
+        <div className="h-64 flex items-center justify-center">
           <div className="text-red-500">Error: {error}</div>
         </div>
-      </div>
-    );
-  }
+      );
+    }
 
-  if (historicalPrices.length === 0) {
-    return (
-      <div className="bg-white rounded-xl shadow p-6 flex-1">
-        <h3 className="text-lg font-semibold text-gray-800 mb-4">{title}</h3>
-        <div className="h-80 flex items-center justify-center">
+    if (historicalPrices.length === 0) {
+      return (
+        <div className="h-64 flex items-center justify-center">
           <div className="text-gray-500">No price data available</div>
         </div>
-      </div>
-    );
-  }
+      );
+    }
 
-  return (
-    <div className="bg-white rounded-xl shadow p-6 flex-1">
-      <h3 className="text-lg font-semibold text-gray-800 mb-4">{title}</h3>
-      <div className="h-80">
+    return (
+      <div className="h-64">
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={processedData} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
             <XAxis
@@ -225,6 +217,44 @@ export default function OpinionTimeline({ title = 'UP Token Price Timeline' }: P
             />
           </LineChart>
         </ResponsiveContainer>
+      </div>
+    );
+  };
+
+  return (
+    <div className="bg-white/70 backdrop-blur-sm rounded-xl shadow p-6">
+      {/* Header Section */}
+      <div className="flex items-start gap-4 mb-6">
+        <div className="relative w-16 h-16 flex-shrink-0">
+          <Image
+            src={debate.image}
+            alt={debate.title}
+            fill
+            className="object-cover rounded"
+            sizes="64px"
+          />
+        </div>
+        <div className="flex-1">
+          <h1 className="text-6xl font-bold text-gray-900 mb-1">{debate.title}</h1>
+          {/* Compact Progress Bar */}
+          <div className="mb-2">
+            <div className="flex items-center justify-between text-sm text-gray-600 mb-1">
+              <span className="text-green-600 font-medium">{debate.noPercent}% No</span>
+              <span className="text-red-600 font-medium">{debate.yesPercent}% Yes</span>
+            </div>
+            <div className="w-full bg-green-500 rounded-full h-2">
+              <div
+                className="bg-red-600 h-2 rounded-full transition-all duration-300"
+                style={{ width: `${debate.noPercent}%` }}
+              ></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Chart Section */}
+      <div>
+        {renderChart()}
       </div>
     </div>
   );
