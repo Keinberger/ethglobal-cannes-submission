@@ -14,16 +14,16 @@ export default function Position({ balances, balancesLoading, balancesError }: P
   const { isConnected } = useAccount();
   const { latestUpPriceUSD, loading: pricesLoading } = usePrices();
 
-
-
   // Calculate position values
   // latestUpPriceUSD is the USD value of 1 UP token
   // For DOWN tokens: USD value = token balance * (1 - UP price) since UP + DOWN = 1 USD
-  const upPositionValue = latestUpPriceUSD ? Number(balances.up) / 1e18 * (latestUpPriceUSD * 2) : 0;
-  const downPositionValue = latestUpPriceUSD ? Number(balances.down) / 1e18 * ((1 - latestUpPriceUSD) * 2) : 0;
+  const upPositionValue = latestUpPriceUSD
+    ? (Number(balances.up) / 1e18) * (latestUpPriceUSD * 2)
+    : 0;
+  const downPositionValue = latestUpPriceUSD
+    ? (Number(balances.down) / 1e18) * ((1 - latestUpPriceUSD) * 2)
+    : 0;
   const usdcBalanceUSD = Number(balances.usdc) / 1e6;
-
-
 
   const isLoading = balancesLoading || pricesLoading;
   // Use a small threshold to avoid showing dust amounts (less than 0.000001 tokens)
@@ -53,7 +53,12 @@ export default function Position({ balances, balancesLoading, balancesError }: P
           ) : (
             <>
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"
+                />
               </svg>
               ${usdcBalanceUSD.toFixed(2)}
             </>
@@ -94,7 +99,9 @@ export default function Position({ balances, balancesLoading, balancesError }: P
       {!hasAnyPosition && !isLoading && (
         <div className="text-center text-gray-500 py-4">
           <div className="text-sm">No active positions</div>
-          <div className="text-xs text-gray-400 mt-1">Place your first opinion to see your position here</div>
+          <div className="text-xs text-gray-400 mt-1">
+            Place your first opinion to see your position here
+          </div>
         </div>
       )}
     </div>

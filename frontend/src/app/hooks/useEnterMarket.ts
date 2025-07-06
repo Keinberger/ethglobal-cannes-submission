@@ -2,13 +2,12 @@ import { useState, useCallback, useEffect } from 'react';
 import { useAccount, useContractWrite, useWaitForTransactionReceipt } from 'wagmi';
 
 import SmartVoter7702ABI from '../contracts/SmartVoter7702.json';
-import { 
-  AMM_CONTRACT_ADDRESS, 
-  LIQUIDITY_ENGINE_CONTRACT_ADDRESS, 
+import {
+  AMM_CONTRACT_ADDRESS,
+  LIQUIDITY_ENGINE_CONTRACT_ADDRESS,
   USDC_CONTRACT_ADDRESS,
-  SMART_VOTER_CONTRACT_ADDRESS
+  SMART_VOTER_CONTRACT_ADDRESS,
 } from '../contracts/constants';
-
 
 export type EIP7702TransactionConfig = {
   usdcAmount: bigint;
@@ -38,27 +37,31 @@ export function useEntermarket() {
 
   // Execute the contract write
   const { writeContract, data: hash, isPending, error } = useContractWrite();
-  
-  const { data: receipt, isSuccess, isError } = useWaitForTransactionReceipt({
+
+  const {
+    data: receipt,
+    isSuccess,
+    isError,
+  } = useWaitForTransactionReceipt({
     hash,
   });
 
   // Update transaction state based on wagmi hooks
   useEffect(() => {
     if (isPending) {
-      setTransactionState(prev => ({
+      setTransactionState((prev) => ({
         ...prev,
         status: 'pending',
         error: null,
       }));
     } else if (isSuccess && receipt) {
-      setTransactionState(prev => ({
+      setTransactionState((prev) => ({
         ...prev,
         status: 'success',
         receipt,
       }));
     } else if (isError && error) {
-      setTransactionState(prev => ({
+      setTransactionState((prev) => ({
         ...prev,
         status: 'error',
         error: error.message,
@@ -69,7 +72,7 @@ export function useEntermarket() {
   // Update hash when available
   useEffect(() => {
     if (hash) {
-      setTransactionState(prev => ({
+      setTransactionState((prev) => ({
         ...prev,
         hash,
       }));
@@ -80,52 +83,55 @@ export function useEntermarket() {
    * Send a transaction to enter the market
    * Directly calls the SmartVoter7702 contract's enterMarket function
    */
-  const enterMarket = useCallback(async (config: EIP7702TransactionConfig) => {
-    if (!isConnected || !address) {
-      throw new Error('Wallet not connected');
-    }
+  const enterMarket = useCallback(
+    async (config: EIP7702TransactionConfig) => {
+      if (!isConnected || !address) {
+        throw new Error('Wallet not connected');
+      }
 
-    if (!writeContract) {
-      throw new Error('Write contract function not available');
-    }
+      if (!writeContract) {
+        throw new Error('Write contract function not available');
+      }
 
-    try {
-      // Reset state
-      setTransactionState(prev => ({
-        ...prev,
-        status: 'pending',
-        error: null,
-      }));
+      try {
+        // Reset state
+        setTransactionState((prev) => ({
+          ...prev,
+          status: 'pending',
+          error: null,
+        }));
 
-      console.log('Sending enterMarket transaction to SmartVoter contract with params:', config);
+        console.log('Sending enterMarket transaction to SmartVoter contract with params:', config);
 
-      // Send the transaction
-      (writeContract as any)({
-        address: SMART_VOTER_CONTRACT_ADDRESS,
-        abi: SmartVoter7702ABI.abi,
-        functionName: 'enterMarket',
-        args: [
-          USDC_CONTRACT_ADDRESS,
-          LIQUIDITY_ENGINE_CONTRACT_ADDRESS,
-          AMM_CONTRACT_ADDRESS,
-          config.up,
-          config.usdcAmount,
-          config.minAmountOut,
-        ],
-      });
+        // Send the transaction
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (writeContract as any)({
+          address: SMART_VOTER_CONTRACT_ADDRESS,
+          abi: SmartVoter7702ABI.abi,
+          functionName: 'enterMarket',
+          args: [
+            USDC_CONTRACT_ADDRESS,
+            LIQUIDITY_ENGINE_CONTRACT_ADDRESS,
+            AMM_CONTRACT_ADDRESS,
+            config.up,
+            config.usdcAmount,
+            config.minAmountOut,
+          ],
+        });
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : 'Transaction failed';
 
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Transaction failed';
-      
-      setTransactionState(prev => ({
-        ...prev,
-        status: 'error',
-        error: errorMessage,
-      }));
+        setTransactionState((prev) => ({
+          ...prev,
+          status: 'error',
+          error: errorMessage,
+        }));
 
-      throw error;
-    }
-  }, [isConnected, address, writeContract]);
+        throw error;
+      }
+    },
+    [isConnected, address, writeContract]
+  );
 
   /**
    * Reset transaction state
@@ -147,15 +153,15 @@ export function useEntermarket() {
   return {
     // State
     transactionState,
-    
+
     // Actions
     enterMarket,
     resetTransaction,
-    
+
     // Utilities
     isReady,
     hasWallet: isConnected && !!address,
-    
+
     // Wagmi state
     isPending,
     isSuccess,
@@ -163,4 +169,4 @@ export function useEntermarket() {
     hash,
     receipt,
   };
-} 
+}

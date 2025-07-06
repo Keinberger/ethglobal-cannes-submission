@@ -20,19 +20,13 @@ export default function DebateOverview({ debate, useRealData = false }: Props) {
   const { historicalPrices, loading, error, latestUpPriceUSD } = usePrices();
 
   // Calculate real-time percentages from latest price data only for first debate
-  const currentYesPercent = (useRealData && latestUpPriceUSD) 
-    ? Math.round(latestUpPriceUSD * 100) 
-    : debate.yesPercent;
-  const currentNoPercent = (useRealData && latestUpPriceUSD) 
-    ? Math.round((1 - latestUpPriceUSD) * 100) 
-    : debate.noPercent;
+  const currentYesPercent =
+    useRealData && latestUpPriceUSD ? Math.round(latestUpPriceUSD * 100) : debate.yesPercent;
+  const currentNoPercent =
+    useRealData && latestUpPriceUSD ? Math.round((1 - latestUpPriceUSD) * 100) : debate.noPercent;
 
-  const goodSelection = (useRealData) 
-    ? "Alpha"
-    : "Good";
-  const badSelection = (useRealData) 
-    ? "Cringe"
-    : "Bad";
+  const goodSelection = useRealData ? 'Alpha' : 'Good';
+  const badSelection = useRealData ? 'Cringe' : 'Bad';
 
   // Create base data points from historical prices - reverse to show oldest to newest
   const baseData = historicalPrices.map((price, index) => {
@@ -48,6 +42,7 @@ export default function DebateOverview({ debate, useRealData = false }: Props) {
   }); // Reverse to show data from oldest to newest (left to right)
 
   // Add interpolated crossing points for smooth transitions
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const processedData: any[] = [];
 
   for (let i = 0; i < baseData.length; i++) {
@@ -92,6 +87,7 @@ export default function DebateOverview({ debate, useRealData = false }: Props) {
       }));
 
       // Add interpolated crossing points for smooth transitions
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const processedMockData: any[] = [];
 
       for (let i = 0; i < baseData.length; i++) {
@@ -126,7 +122,10 @@ export default function DebateOverview({ debate, useRealData = false }: Props) {
       return (
         <div className="h-64">
           <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={processedMockData} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
+            <LineChart
+              data={processedMockData}
+              margin={{ top: 20, right: 30, left: 20, bottom: 20 }}
+            >
               <XAxis
                 dataKey="time"
                 axisLine={false}
@@ -163,7 +162,7 @@ export default function DebateOverview({ debate, useRealData = false }: Props) {
                   boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
                 }}
               />
-              
+
               {/* Green Line (Above 50%) */}
               <Line
                 type="monotone"
@@ -433,8 +432,12 @@ export default function DebateOverview({ debate, useRealData = false }: Props) {
           {/* Compact Progress Bar */}
           <div className="my-8">
             <div className="flex items-center justify-between text-gray-600 mb-1">
-              <span className="text-red-600 text-lg">{currentNoPercent}% {badSelection}</span>
-              <span className="text-green-600 text-lg">{currentYesPercent}% {goodSelection}</span>
+              <span className="text-red-600 text-lg">
+                {currentNoPercent}% {badSelection}
+              </span>
+              <span className="text-green-600 text-lg">
+                {currentYesPercent}% {goodSelection}
+              </span>
             </div>
             <div className="w-full bg-green-500 rounded-full h-2">
               <div
@@ -447,9 +450,7 @@ export default function DebateOverview({ debate, useRealData = false }: Props) {
       </div>
 
       {/* Chart Section */}
-      <div>
-        {renderChart()}
-      </div>
+      <div>{renderChart()}</div>
     </div>
   );
 }

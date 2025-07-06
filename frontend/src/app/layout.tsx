@@ -24,9 +24,7 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} min-h-screen`}
-      >
+      <body className={`${geistSans.variable} ${geistMono.variable} min-h-screen`}>
         <Providers>
           <header className="flex items-center px-4 py-4 shadow-lg z-20 bg-white">
             <Link href="/">
@@ -42,9 +40,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <div className="flex-grow" />
             <LoginButton />
           </header>
-          <div className='bg-gradient-to-br from-slate-100 to-purple-100'>
-            {children}
-          </div>
+          <div className="bg-gradient-to-br from-slate-100 to-purple-100">{children}</div>
         </Providers>
       </body>
     </html>

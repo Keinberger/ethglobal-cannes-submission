@@ -14,7 +14,12 @@ export default function DebateDetailsPage() {
   const debate = mockDebates.find((d) => d.opinionId.toString() === params.opinionId);
 
   // Get token balances at the parent level
-  const { balances, loading: balancesLoading, error: balancesError, refetch: refetchBalances } = useTokenBalances(SMART_VOTER_CONTRACT_ADDRESS);
+  const {
+    balances,
+    loading: balancesLoading,
+    error: balancesError,
+    refetch: refetchBalances,
+  } = useTokenBalances(SMART_VOTER_CONTRACT_ADDRESS);
 
   if (!debate) return notFound();
 
@@ -29,7 +34,7 @@ export default function DebateDetailsPage() {
           {/* Left Column - Combined Overview + Position */}
           <div className="col-span-8 space-y-5">
             <DebateOverview debate={debate} useRealData={useRealData} />
-            <Position 
+            <Position
               balances={balances}
               balancesLoading={balancesLoading}
               balancesError={balancesError}
@@ -38,8 +43,8 @@ export default function DebateDetailsPage() {
           {/* Right Column - Opinion Stream + Opinion Card */}
           <div className="col-span-4 space-y-5 sticky top-4 h-fit">
             <OpinionStream opinions={debate.opinionStream || []} />
-            <OpinionCard 
-              debateId={debate.opinionId} 
+            <OpinionCard
+              debateId={debate.opinionId}
               balances={balances}
               refetchBalances={refetchBalances}
             />

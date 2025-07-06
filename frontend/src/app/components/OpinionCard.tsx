@@ -21,10 +21,7 @@ export default function OpinionCard({ balances, refetchBalances, debateId }: Opi
   const [comment, setComment] = useState('');
   const [showComment, setShowComment] = useState(false);
 
-  const { 
-    latestUpPriceUSD, 
-    fetchRecentPrices 
-  } = usePrices();
+  const { latestUpPriceUSD, fetchRecentPrices } = usePrices();
 
   const {
     enterMarket,
@@ -32,7 +29,7 @@ export default function OpinionCard({ balances, refetchBalances, debateId }: Opi
     isSuccess: isEnterSuccess,
     isError: isEnterError,
     resetTransaction: resetEnterTransaction,
-    hash: enterHash
+    hash: enterHash,
   } = useEntermarket();
 
   const {
@@ -41,7 +38,7 @@ export default function OpinionCard({ balances, refetchBalances, debateId }: Opi
     isSuccess: isExitSuccess,
     isError: isExitError,
     resetTransaction: resetExitTransaction,
-    hash: exitHash
+    hash: exitHash,
   } = useExitMarket();
 
   // Use the appropriate transaction state based on mode
@@ -52,22 +49,25 @@ export default function OpinionCard({ balances, refetchBalances, debateId }: Opi
 
   // Function to refresh data after 2 blocks
 
-
   // Effect to handle transaction completion and refresh data
   useEffect(() => {
     if (isSuccess && hash) {
       console.log('Transaction successful, refreshing data...');
-      
+
       // Immediately refresh data when transaction is mined
       fetchRecentPrices();
       refetchBalances();
-      
+
       // Reset transaction state after a short delay
       setTimeout(() => {
-        resetTransaction();
+        if (mode === 'buy') {
+          resetEnterTransaction();
+        } else {
+          resetExitTransaction();
+        }
       }, 2000);
     }
-  }, [isSuccess, hash, fetchRecentPrices, refetchBalances]);
+  }, [isSuccess, hash, fetchRecentPrices, refetchBalances, mode, resetEnterTransaction, resetExitTransaction]);
 
   // Use real prices from hook if available, otherwise fallback to mock
   const yesPrice = latestUpPriceUSD || 0.68;
@@ -77,13 +77,13 @@ export default function OpinionCard({ balances, refetchBalances, debateId }: Opi
   // Since 1 UP + 1 DOWN = 2 USDC, we need to convert the ratio to actual USD value
   const calculatePositionValue = () => {
     if (!latestUpPriceUSD) return 0;
-    
+
     if (stance === 'yes') {
       // UP position value = UP tokens * (UP ratio * 2 USDC)
-      return Number(balances.up) / 1e18 * latestUpPriceUSD * 2;
+      return (Number(balances.up) / 1e18) * latestUpPriceUSD * 2;
     } else {
       // DOWN position value = DOWN tokens * (DOWN ratio * 2 USDC)
-      return Number(balances.down) / 1e18 * (1 - latestUpPriceUSD) * 2;
+      return (Number(balances.down) / 1e18) * (1 - latestUpPriceUSD) * 2;
     }
   };
 
@@ -108,7 +108,7 @@ export default function OpinionCard({ balances, refetchBalances, debateId }: Opi
       }
     } else {
       // For other percentages, use the calculated position value
-      const targetAmount = (positionValue * percentage / 100).toFixed(2);
+      const targetAmount = ((positionValue * percentage) / 100).toFixed(2);
       setAmount(targetAmount);
     }
   };
@@ -140,15 +140,15 @@ export default function OpinionCard({ balances, refetchBalances, debateId }: Opi
         usdAmount,
         isUpPosition,
         comment,
-        address
+        address,
       });
 
       if (mode === 'buy') {
         // Convert USD amount to USDC (6 decimals) for buying
         const usdcAmount = BigInt(Math.floor(usdAmount * 1e6));
-        
+
         console.log('Buying position with USDC amount:', usdcAmount.toString());
-        
+
         // Send the enterMarket transaction
         await enterMarket({
           usdcAmount,
@@ -159,7 +159,7 @@ export default function OpinionCard({ balances, refetchBalances, debateId }: Opi
         // For selling, we need to convert USD amount to token amount based on current price
         let tokenAmount: bigint;
         let tokenAmountFloat: number;
-        
+
         if (isUpPosition) {
           // Selling UP tokens: USD amount / (UP ratio * 2 USDC)
           const upRatio = latestUpPriceUSD || 0.68;
@@ -171,16 +171,20 @@ export default function OpinionCard({ balances, refetchBalances, debateId }: Opi
           tokenAmountFloat = usdAmount / (downRatio * 2);
           tokenAmount = BigInt(Math.floor(tokenAmountFloat * 1e18));
         }
-        
+
         console.log('Selling position - Token conversion:', {
           usdAmount,
           isUpPosition,
-          currentRatio: isUpPosition ? (latestUpPriceUSD || 0.68) : (latestUpPriceUSD ? 1 - latestUpPriceUSD : 0.32),
+          currentRatio: isUpPosition
+            ? latestUpPriceUSD || 0.68
+            : latestUpPriceUSD
+              ? 1 - latestUpPriceUSD
+              : 0.32,
           tokenAmountFloat,
           tokenAmountRaw: tokenAmount.toString(),
-          tokenAmountFormatted: (Number(tokenAmount) / 1e18).toFixed(6)
+          tokenAmountFormatted: (Number(tokenAmount) / 1e18).toFixed(6),
         });
-      
+
         // Send the exitMarket transaction
         await exitMarket({
           burnAmount: tokenAmount,
@@ -189,45 +193,37 @@ export default function OpinionCard({ balances, refetchBalances, debateId }: Opi
       }
 
       console.log('Transaction submitted successfully');
-      
+
       // Reset form on success
       if (isSuccess) {
         setAmount('');
         setComment('');
         setShowComment(false);
       }
-
     } catch (error) {
       console.error('Failed to submit opinion:', error);
     }
   };
 
-  const resetTransaction = () => {
-    if (mode === 'buy') {
-      resetEnterTransaction();
-    } else {
-      resetExitTransaction();
-    }
-  };
 
   // Handle transaction state changes
   const getButtonText = () => {
     if (!isConnected) {
       return 'Voice Opinion';
     }
-    
+
     if (isPending) {
       return 'Submitting...';
     }
-    
+
     if (isSuccess) {
       return mode === 'buy' ? 'Voice Opinion' : 'Sell Position';
     }
-    
+
     if (isError) {
       return 'Transaction Failed - Try Again';
     }
-    
+
     return mode === 'buy' ? 'Voice Opinion' : 'Sell Position';
   };
 
@@ -235,25 +231,24 @@ export default function OpinionCard({ balances, refetchBalances, debateId }: Opi
     if (!isConnected) {
       return 'bg-indigo-500 hover:bg-indigo-600';
     }
-    
+
     if (isPending) {
       return 'bg-gray-400 cursor-not-allowed';
     }
-    
+
     if (isSuccess) {
       return mode === 'buy' ? 'bg-blue-600 hover:bg-blue-700' : 'bg-red-600 hover:bg-red-700';
     }
-    
+
     if (isError) {
       return 'bg-red-600 hover:bg-red-700';
     }
-    
+
     return mode === 'buy' ? 'bg-blue-600 hover:bg-blue-700' : 'bg-red-600 hover:bg-red-700';
   };
 
   return (
     <div className="bg-white rounded-xl shadow-lg p-6 space-y-2">
-
       {/* Compact Buy/Sell Toggle */}
       <div className="flex bg-gray-100 rounded-lg p-1 w-fit">
         <button
@@ -329,7 +324,7 @@ export default function OpinionCard({ balances, refetchBalances, debateId }: Opi
         {mode === 'sell' && (
           <div className="space-y-2">
             <div className="text-xs text-gray-500">
-              Available position: ${(positionValue).toFixed(2)}
+              Available position: ${positionValue.toFixed(2)}
             </div>
             <div className="flex gap-2">
               <button
@@ -359,42 +354,48 @@ export default function OpinionCard({ balances, refetchBalances, debateId }: Opi
       </div>
 
       {/* Comment Dropdown */}
-      {mode === 'buy' && 
-      (<div className="space-y-2">
-        <button
-          onClick={() => setShowComment(!showComment)}
-          className="flex items-center justify-between w-full p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
-          disabled={isPending}
-        >
-          <span className="text-sm text-gray-700">Add reasoning (optional)</span>
-          <svg
-            className={`w-4 h-4 transition-transform ${showComment ? 'rotate-180' : ''}`}
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-          </svg>
-        </button>
-        {showComment && (
-          <textarea
-            value={comment}
-            onChange={(e) => setComment(e.target.value)}
-            placeholder="Share why you feel this way..."
-            rows={3}
-            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
+      {mode === 'buy' && (
+        <div className="space-y-2">
+          <button
+            onClick={() => setShowComment(!showComment)}
+            className="flex items-center justify-between w-full p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
             disabled={isPending}
-          />
-        )}
-      </div>)}
-
-
+          >
+            <span className="text-sm text-gray-700">Add reasoning (optional)</span>
+            <svg
+              className={`w-4 h-4 transition-transform ${showComment ? 'rotate-180' : ''}`}
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M19 9l-7 7-7-7"
+              />
+            </svg>
+          </button>
+          {showComment && (
+            <textarea
+              value={comment}
+              onChange={(e) => setComment(e.target.value)}
+              placeholder="Share why you feel this way..."
+              rows={3}
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
+              disabled={isPending}
+            />
+          )}
+        </div>
+      )}
 
       {/* Submit Button */}
       <button
         onClick={handleSubmit}
         className={`w-full px-6 py-4 rounded-lg text-white text-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all ${getButtonClass()}`}
-        disabled={!isConnected || isPending || (isConnected && (!amount || parseFloat(amount) <= 0))}
+        disabled={
+          !isConnected || isPending || (isConnected && (!amount || parseFloat(amount) <= 0))
+        }
       >
         {getButtonText()}
       </button>

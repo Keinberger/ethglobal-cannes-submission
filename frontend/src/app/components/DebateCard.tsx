@@ -12,18 +12,12 @@ export default function DebateCard({ debate, isFirstCard = false }: Props) {
   const { latestUpPriceUSD } = usePrices();
 
   // Calculate real-time percentages for first card only
-  const currentYesPercent = (isFirstCard && latestUpPriceUSD) 
-    ? Math.round(latestUpPriceUSD * 100) 
-    : debate.yesPercent;
-  const currentNoPercent = (isFirstCard && latestUpPriceUSD) 
-    ? Math.round((1 - latestUpPriceUSD) * 100) 
-    : debate.noPercent;
-  const goodSelection = (isFirstCard) 
-    ? "Alpha"
-    : "Good";
-  const badSelection = (isFirstCard) 
-    ? "Cringe"
-    : "Bad";
+  const currentYesPercent =
+    isFirstCard && latestUpPriceUSD ? Math.round(latestUpPriceUSD * 100) : debate.yesPercent;
+  const currentNoPercent =
+    isFirstCard && latestUpPriceUSD ? Math.round((1 - latestUpPriceUSD) * 100) : debate.noPercent;
+  const goodSelection = isFirstCard ? 'Alpha' : 'Good';
+  const badSelection = isFirstCard ? 'Cringe' : 'Bad';
   return (
     <Link
       href={`/debates/${debate.opinionId}`}

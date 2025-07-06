@@ -1,28 +1,28 @@
 import { useState, useEffect, useCallback } from 'react';
 import { usePublicClient } from 'wagmi';
 import { sepolia } from 'viem/chains';
-import { 
-  USDC_CONTRACT_ADDRESS, 
-  UP_TOKEN_CONTRACT_ADDRESS, 
-  DOWN_TOKEN_CONTRACT_ADDRESS 
+import {
+  USDC_CONTRACT_ADDRESS,
+  UP_TOKEN_CONTRACT_ADDRESS,
+  DOWN_TOKEN_CONTRACT_ADDRESS,
 } from '../contracts/constants';
 
 // ERC20 ABI for balanceOf function
 const ERC20_ABI = [
   {
-    "constant": true,
-    "inputs": [{"name": "_owner", "type": "address"}],
-    "name": "balanceOf",
-    "outputs": [{"name": "balance", "type": "uint256"}],
-    "type": "function"
+    constant: true,
+    inputs: [{ name: '_owner', type: 'address' }],
+    name: 'balanceOf',
+    outputs: [{ name: 'balance', type: 'uint256' }],
+    type: 'function',
   },
   {
-    "constant": true,
-    "inputs": [],
-    "name": "decimals",
-    "outputs": [{"name": "", "type": "uint8"}],
-    "type": "function"
-  }
+    constant: true,
+    inputs: [],
+    name: 'decimals',
+    outputs: [{ name: '', type: 'uint8' }],
+    type: 'function',
+  },
 ] as const;
 
 export type TokenBalances = {
@@ -59,28 +59,28 @@ export function useTokenBalances(address?: `0x${string}`) {
 
     try {
       // Fetch USDC balance (6 decimals)
-      const usdcBalance = await publicClient.readContract({
+      const usdcBalance = (await publicClient.readContract({
         address: USDC_CONTRACT_ADDRESS,
         abi: ERC20_ABI,
         functionName: 'balanceOf',
         args: [address],
-      }) as bigint;
+      })) as bigint;
 
       // Fetch UP token balance (18 decimals)
-      const upBalance = await publicClient.readContract({
+      const upBalance = (await publicClient.readContract({
         address: UP_TOKEN_CONTRACT_ADDRESS,
         abi: ERC20_ABI,
         functionName: 'balanceOf',
         args: [address],
-      }) as bigint;
+      })) as bigint;
 
       // Fetch DOWN token balance (18 decimals)
-      const downBalance = await publicClient.readContract({
+      const downBalance = (await publicClient.readContract({
         address: DOWN_TOKEN_CONTRACT_ADDRESS,
         abi: ERC20_ABI,
         functionName: 'balanceOf',
         args: [address],
-      }) as bigint;
+      })) as bigint;
 
       // Format balances
       const usdcFormatted = (Number(usdcBalance) / 1e6).toFixed(2);
@@ -100,9 +100,8 @@ export function useTokenBalances(address?: `0x${string}`) {
       console.log('Token balances updated:', {
         usdc: usdcFormatted,
         up: upFormatted,
-        down: downFormatted
+        down: downFormatted,
       });
-
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch balances');
       console.error('Error fetching token balances:', err);
@@ -122,4 +121,4 @@ export function useTokenBalances(address?: `0x${string}`) {
     error,
     refetch: fetchBalances,
   };
-} 
+}

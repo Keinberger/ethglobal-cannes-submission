@@ -2,16 +2,11 @@
 
 import '@rainbow-me/rainbowkit/styles.css';
 
-import {
-  getDefaultConfig,
-} from '@rainbow-me/rainbowkit';
-import { WagmiProvider } from "wagmi";
+import { getDefaultConfig } from '@rainbow-me/rainbowkit';
+import { WagmiProvider } from 'wagmi';
 import { RainbowKitProvider } from '@rainbow-me/rainbowkit';
 import { sepolia, mantle, zircuitGarfieldTestnet, flowTestnet } from 'viem/chains';
-import {
-  QueryClientProvider,
-  QueryClient,
-} from "@tanstack/react-query";
+import { QueryClientProvider, QueryClient } from '@tanstack/react-query';
 
 // Create a custom Sepolia chain with Mantle branding
 const sepoliaWithMantleIcon = {
@@ -33,9 +28,7 @@ export default function Providers({ children }: { children: React.ReactNode }) {
   return (
     <WagmiProvider config={config}>
       <QueryClientProvider client={queryClient}>
-        <RainbowKitProvider>
-          {children}
-        </RainbowKitProvider>
+        <RainbowKitProvider>{children}</RainbowKitProvider>
       </QueryClientProvider>
     </WagmiProvider>
   );
