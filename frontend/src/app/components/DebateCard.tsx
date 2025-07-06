@@ -1,12 +1,23 @@
 import { debateType } from '../types';
 import Link from 'next/link';
 import Image from 'next/image';
+import { usePrices } from '../hooks/usePrices';
 
 type Props = {
   debate: debateType;
+  isFirstCard?: boolean;
 };
 
-export default function DebateCard({ debate }: Props) {
+export default function DebateCard({ debate, isFirstCard = false }: Props) {
+  const { latestUpPriceUSD } = usePrices();
+
+  // Calculate real-time percentages for first card only
+  const currentYesPercent = (isFirstCard && latestUpPriceUSD) 
+    ? Math.round(latestUpPriceUSD * 100) 
+    : debate.yesPercent;
+  const currentNoPercent = (isFirstCard && latestUpPriceUSD) 
+    ? Math.round((1 - latestUpPriceUSD) * 100) 
+    : debate.noPercent;
   return (
     <Link
       href={`/debates/${debate.opinionId}`}
@@ -35,11 +46,11 @@ export default function DebateCard({ debate }: Props) {
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-6">
             <div className="text-center">
-              <div className="text-2xl font-bold text-green-600">{debate.yesPercent}%</div>
+              <div className="text-2xl font-bold text-green-600">{currentYesPercent}%</div>
               <div className="text-xs text-gray-500">Yes</div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold text-red-600">{debate.noPercent}%</div>
+              <div className="text-2xl font-bold text-red-600">{currentNoPercent}%</div>
               <div className="text-xs text-gray-500">No</div>
             </div>
           </div>
