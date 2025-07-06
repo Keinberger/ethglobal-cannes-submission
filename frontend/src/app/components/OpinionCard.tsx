@@ -9,7 +9,11 @@ import { useExitMarket } from '../hooks/useExitMarket';
 import { useTokenBalances } from '../hooks/useTokenBalances';
 import { SMART_VOTER_CONTRACT_ADDRESS } from '../contracts/constants';
 
-export default function OpinionCard() {
+type Props = {
+  debateId?: number;
+};
+
+export default function OpinionCard({ debateId }: Props = {}) {
   const { isConnected, address } = useAccount();
   const [mode, setMode] = useState<'buy' | 'sell'>('buy');
   const [stance, setStance] = useState<'yes' | 'no'>('yes');
@@ -137,6 +141,11 @@ export default function OpinionCard() {
     const targetAmount = (positionValue * percentage / 100).toFixed(2);
     setAmount(targetAmount);
   };
+
+  // Determine button labels based on debate
+  const isFirstDebate = debateId === 1;
+  const yesLabel = isFirstDebate ? 'Alpha' : 'Yes';
+  const noLabel = isFirstDebate ? 'Cringe' : 'No';
 
   const handleSubmit = async () => {
     if (!isConnected) {
@@ -302,7 +311,7 @@ export default function OpinionCard() {
             }`}
           >
             <div className="text-center">
-              <div className="text-sm text-gray-900">Yes</div>
+              <div className="text-sm text-gray-900">{yesLabel}</div>
               <div className="text-lg text-green-600">${yesPrice.toFixed(2)}</div>
             </div>
           </button>
@@ -313,7 +322,7 @@ export default function OpinionCard() {
             }`}
           >
             <div className="text-center">
-              <div className="text-sm text-gray-900">No</div>
+              <div className="text-sm text-gray-900">{noLabel}</div>
               <div className="text-lg text-red-600">${noPrice.toFixed(2)}</div>
             </div>
           </button>

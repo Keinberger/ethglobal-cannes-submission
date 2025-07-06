@@ -18,6 +18,12 @@ export default function DebateCard({ debate, isFirstCard = false }: Props) {
   const currentNoPercent = (isFirstCard && latestUpPriceUSD) 
     ? Math.round((1 - latestUpPriceUSD) * 100) 
     : debate.noPercent;
+  const goodSelection = (isFirstCard) 
+    ? "Alpha"
+    : "Good";
+  const badSelection = (isFirstCard) 
+    ? "Cringe"
+    : "Bad";
   return (
     <Link
       href={`/debates/${debate.opinionId}`}
@@ -47,11 +53,11 @@ export default function DebateCard({ debate, isFirstCard = false }: Props) {
           <div className="flex items-center gap-6">
             <div className="text-center">
               <div className="text-2xl font-bold text-green-600">{currentYesPercent}%</div>
-              <div className="text-xs text-gray-500">Yes</div>
+              <div className="text-xs text-gray-500">{goodSelection}</div>
             </div>
             <div className="text-center">
               <div className="text-2xl font-bold text-red-600">{currentNoPercent}%</div>
-              <div className="text-xs text-gray-500">No</div>
+              <div className="text-xs text-gray-500">{badSelection}</div>
             </div>
           </div>
         </div>
