@@ -12,7 +12,7 @@ export default function OpinionStream({ opinions }: Props) {
         <div className={`w-2 h-2 rounded-full mt-2.5 flex-shrink-0 bg-red-500`} />
       </div>
 
-      <div className="space-y-3 h-60 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
+      <div className="space-y-3 max-h-40 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
         {opinions.map((opinion, index) => (
           <div
             key={`${opinion.author}-${index}`}

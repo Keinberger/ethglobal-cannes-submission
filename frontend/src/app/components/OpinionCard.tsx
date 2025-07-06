@@ -228,7 +228,7 @@ export default function OpinionCard() {
     <div className="bg-white rounded-xl shadow-lg p-6 space-y-2">
       {/* Transaction Status */}
       {transactionState.status !== 'idle' && (
-        <div className={`p-3 rounded-lg text-sm font-medium ${
+        <div className={`p-3 rounded-lg text-sm ${
           transactionState.status === 'pending' ? 'bg-blue-50 text-blue-700' :
           transactionState.status === 'success' ? 'bg-green-50 text-green-700' :
           'bg-red-50 text-red-700'
@@ -243,7 +243,7 @@ export default function OpinionCard() {
       <div className="flex bg-gray-100 rounded-lg p-1 w-fit">
         <button
           onClick={() => setMode('buy')}
-          className={`px-6 py-2 rounded-md text-sm font-medium transition-all ${
+          className={`px-6 py-2 rounded-md text-sm transition-all ${
             mode === 'buy'
               ? 'bg-white text-gray-900 shadow-sm'
               : 'text-gray-600 hover:text-gray-900'
@@ -253,7 +253,7 @@ export default function OpinionCard() {
         </button>
         <button
           onClick={() => setMode('sell')}
-          className={`px-6 py-2 rounded-md text-sm font-medium transition-all ${
+          className={`px-6 py-2 rounded-md text-sm transition-all ${
             mode === 'sell'
               ? 'bg-white text-gray-900 shadow-sm'
               : 'text-gray-600 hover:text-gray-900'
@@ -275,8 +275,8 @@ export default function OpinionCard() {
             }`}
           >
             <div className="text-center">
-              <div className="text-sm font-semibold text-gray-900">Yes</div>
-              <div className="text-lg font-bold text-green-600">${yesPrice.toFixed(2)}</div>
+              <div className="text-sm text-gray-900">Yes</div>
+              <div className="text-lg text-green-600">${yesPrice.toFixed(2)}</div>
             </div>
           </button>
           <button
@@ -286,8 +286,8 @@ export default function OpinionCard() {
             }`}
           >
             <div className="text-center">
-              <div className="text-sm font-semibold text-gray-900">No</div>
-              <div className="text-lg font-bold text-red-600">${noPrice.toFixed(2)}</div>
+              <div className="text-sm text-gray-900">No</div>
+              <div className="text-lg text-red-600">${noPrice.toFixed(2)}</div>
             </div>
           </button>
         </div>
@@ -295,7 +295,7 @@ export default function OpinionCard() {
 
       {/* Amount Input */}
       <div className="space-y-3">
-        <label className="text-sm font-medium text-gray-700">Amount (USD)</label>
+        <label className="text-sm text-gray-700">Amount (USD)</label>
         <div className="relative">
           <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 text-lg">
             $
@@ -309,9 +309,6 @@ export default function OpinionCard() {
             disabled={isPending}
           />
         </div>
-        <p className="text-xs text-gray-500">
-          This will be converted to USDC (6 decimals) for the transaction
-        </p>
       </div>
 
       {/* Comment Dropdown */}
@@ -321,7 +318,7 @@ export default function OpinionCard() {
           className="flex items-center justify-between w-full p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
           disabled={isPending}
         >
-          <span className="text-sm font-medium text-gray-700">Add reasoning (optional)</span>
+          <span className="text-sm text-gray-700">Add reasoning (optional)</span>
           <svg
             className={`w-4 h-4 transition-transform ${showComment ? 'rotate-180' : ''}`}
             fill="none"
@@ -343,15 +340,6 @@ export default function OpinionCard() {
         )}
       </div>
 
-      {/* Debug Button for Testing */}
-      <button
-        onClick={fetchRecentPrices}
-        className="w-full px-4 py-2 bg-gray-500 text-white rounded-lg text-sm hover:bg-gray-600 transition-colors mb-2"
-        disabled={isPending}
-      >
-        {loading ? 'Fetching Prices...' : 'Fetch Recent Prices (Debug)'}
-      </button>
-
       {/* Reset Transaction Button */}
       {(isSuccess || isError) && (
         <button
@@ -365,7 +353,7 @@ export default function OpinionCard() {
       {/* Submit Button */}
       <button
         onClick={handleSubmit}
-        className={`w-full px-6 py-4 rounded-lg text-white font-semibold text-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all ${getButtonClass()}`}
+        className={`w-full px-6 py-4 rounded-lg text-white text-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all ${getButtonClass()}`}
         disabled={!isConnected || isPending || (isConnected && (!amount || parseFloat(amount) <= 0))}
       >
         {getButtonText()}

@@ -4,8 +4,7 @@ import { mockDebates } from '@/app/mockData';
 import { notFound, useParams } from 'next/navigation';
 import OpinionCard from '@/app/components/OpinionCard';
 import OpinionStream from '@/app/components/OpinionStream';
-import OpinionTimeline from '@/app/components/OpinionTimeline';
-import DebateHeader from '@/app/components/DebateHeader';
+import DebateOverview from '@/app/components/DebateOverview';
 import Position from '@/app/components/Position';
 
 export default function DebateDetailsPage() {
@@ -16,17 +15,16 @@ export default function DebateDetailsPage() {
 
   return (
     <div className="min-h-screen p-4">
-      <div className="w-full mx-auto">
+      <div className="w-full font-bold mx-auto">
         {/* Main Layout Grid - Browser First */}
-        <div className="grid grid-cols-12 gap-6 h-[calc(100vh-200px)]">
-          {/* Left Column - Header + Opinion Timeline + Position */}
+        <div className="grid grid-cols-12 gap-6">
+          {/* Left Column - Combined Overview + Position */}
           <div className="col-span-8 space-y-5">
-            <DebateHeader debate={debate} />
-            <OpinionTimeline trend={debate.trend} />
+            <DebateOverview debate={debate} />
             <Position />
           </div>
           {/* Right Column - Opinion Stream + Opinion Card */}
-          <div className="col-span-4 space-y-5">
+          <div className="col-span-4 space-y-5 sticky top-4 h-fit">
             <OpinionStream opinions={debate.opinionStream || []} />
             <OpinionCard />
           </div>
