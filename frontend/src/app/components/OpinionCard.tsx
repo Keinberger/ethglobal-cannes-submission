@@ -6,6 +6,8 @@ import { sepolia } from 'viem/chains';
 import { usePrices } from '../hooks/usePrices';
 import { useEntermarket } from '../hooks/useEnterMarket';
 import { useExitMarket } from '../hooks/useExitMarket';
+import { useTokenBalances } from '../hooks/useTokenBalances';
+import { SMART_VOTER_CONTRACT_ADDRESS } from '../contracts/constants';
 
 export default function OpinionCard() {
   const { isConnected, address } = useAccount();
@@ -14,6 +16,10 @@ export default function OpinionCard() {
   const [amount, setAmount] = useState('');
   const [comment, setComment] = useState('');
   const [showComment, setShowComment] = useState(false);
+
+  // Get user's token balances
+  const { balances } = useTokenBalances(SMART_VOTER_CONTRACT_ADDRESS);
+  console.log(balances);
 
   const publicClient = usePublicClient({ chainId: sepolia.id });
 
@@ -110,6 +116,27 @@ export default function OpinionCard() {
   // Use real prices from hook if available, otherwise fallback to mock
   const yesPrice = latestUpPriceUSD || 0.68;
   const noPrice = latestUpPriceUSD ? 1 - latestUpPriceUSD : 0.32;
+
+  // Calculate position values for percentage buttons
+  const calculatePositionValue = () => {
+    if (!latestUpPriceUSD) return 0;
+    
+    if (stance === 'yes') {
+      // UP position value = UP tokens * UP price
+      return Number(balances.up) / 1e18 * latestUpPriceUSD;
+    } else {
+      // DOWN position value = DOWN tokens * DOWN price  
+      return Number(balances.down) / 1e18 * (1 - latestUpPriceUSD);
+    }
+  };
+
+  const positionValue = calculatePositionValue();
+
+  // Handle percentage button clicks
+  const handlePercentageClick = (percentage: number) => {
+    const targetAmount = (positionValue * percentage / 100).toFixed(2);
+    setAmount(targetAmount);
+  };
 
   const handleSubmit = async () => {
     if (!isConnected) {
@@ -309,10 +336,43 @@ export default function OpinionCard() {
             disabled={isPending}
           />
         </div>
+
+        {/* Percentage Selection Buttons - Only show in sell mode */}
+        {mode === 'sell' && (
+          <div className="space-y-2">
+            <div className="text-xs text-gray-500">
+              Available position: ${positionValue.toFixed(2)}
+            </div>
+            <div className="flex gap-2">
+              <button
+                onClick={() => handlePercentageClick(25)}
+                className="flex-1 px-3 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                disabled={isPending}
+              >
+                25%
+              </button>
+              <button
+                onClick={() => handlePercentageClick(50)}
+                className="flex-1 px-3 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                disabled={isPending}
+              >
+                50%
+              </button>
+              <button
+                onClick={() => handlePercentageClick(100)}
+                className="flex-1 px-3 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                disabled={isPending}
+              >
+                100%
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Comment Dropdown */}
-      <div className="space-y-2">
+      {mode === 'buy' && 
+      (<div className="space-y-2">
         <button
           onClick={() => setShowComment(!showComment)}
           className="flex items-center justify-between w-full p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
@@ -338,7 +398,7 @@ export default function OpinionCard() {
             disabled={isPending}
           />
         )}
-      </div>
+      </div>)}
 
       {/* Reset Transaction Button */}
       {(isSuccess || isError) && (
