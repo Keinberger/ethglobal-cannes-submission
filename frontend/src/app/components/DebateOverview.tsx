@@ -18,7 +18,7 @@ type Props = {
 export default function DebateOverview({ debate }: Props) {
   const { historicalPrices, loading, error } = usePrices();
 
-  // Create base data points from historical prices
+  // Create base data points from historical prices - reverse to show oldest to newest
   const baseData = historicalPrices.map((price, index) => {
     const percentage = price.upPriceUSD * 100; // Convert to percentage
     const hoursAgo = historicalPrices.length - index;
@@ -29,7 +29,7 @@ export default function DebateOverview({ debate }: Props) {
       greenLine: percentage >= 50 ? percentage : null,
       redLine: percentage < 50 ? percentage : null,
     };
-  });
+  }); // Reverse to show data from oldest to newest (left to right)
 
   // Add interpolated crossing points for smooth transitions
   const processedData: any[] = [];
@@ -222,7 +222,7 @@ export default function DebateOverview({ debate }: Props) {
   };
 
   return (
-    <div className="bg-white/70 backdrop-blur-sm rounded-xl shadow p-6">
+    <div className="rounded-xl shadow-lg p-6">
       {/* Header Section */}
       <div className="flex items-start gap-4 mb-6">
         <div className="relative w-16 h-16 flex-shrink-0">
@@ -237,10 +237,10 @@ export default function DebateOverview({ debate }: Props) {
         <div className="flex-1">
           <h1 className="text-6xl font-bold text-gray-900 mb-1">{debate.title}</h1>
           {/* Compact Progress Bar */}
-          <div className="mb-2">
-            <div className="flex items-center justify-between text-sm text-gray-600 mb-1">
-              <span className="text-green-600 font-medium">{debate.noPercent}% No</span>
-              <span className="text-red-600 font-medium">{debate.yesPercent}% Yes</span>
+          <div className="my-8">
+            <div className="flex items-center justify-between text-gray-600 mb-1">
+              <span className="text-red-600 text-lg">{debate.noPercent}% No</span>
+              <span className="text-green-600 text-lg">{debate.yesPercent}% Yes</span>
             </div>
             <div className="w-full bg-green-500 rounded-full h-2">
               <div
