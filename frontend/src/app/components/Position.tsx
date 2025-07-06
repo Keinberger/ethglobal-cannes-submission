@@ -73,7 +73,7 @@ export default function Position({ balances, balancesLoading, balancesError }: P
             <div className="flex items-center justify-between py-3 px-4 bg-slate-50 border-2 border-slate-200 rounded-2xl">
               <div className="flex items-center gap-3">
                 <div className="w-3 h-3 bg-green-700 rounded-full"></div>
-                <span className="text-lg font-semibold text-gray-800 tracking-wider">UP</span>
+                <span className="text-lg font-semibold text-gray-800 tracking-wider">UP 📈</span>
               </div>
               <span className="text-lg font-bold text-green-700">
                 ${upPositionValue.toFixed(2)}
@@ -85,7 +85,7 @@ export default function Position({ balances, balancesLoading, balancesError }: P
             <div className="flex items-center justify-between py-3 px-4 bg-slate-50 border-2 border-slate-200 rounded-2xl">
               <div className="flex items-center gap-3">
                 <div className="w-3 h-3 bg-red-700 rounded-full"></div>
-                <span className="text-lg font-semibold text-gray-800 tracking-wider">DOWN</span>
+                <span className="text-lg font-semibold text-gray-800 tracking-wider">DOWN 📉</span>
               </div>
               <span className="text-lg font-bold text-red-700">
                 ${downPositionValue.toFixed(2)}
