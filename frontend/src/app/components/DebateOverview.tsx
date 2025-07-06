@@ -16,7 +16,11 @@ type Props = {
 };
 
 export default function DebateOverview({ debate }: Props) {
-  const { historicalPrices, loading, error } = usePrices();
+  const { historicalPrices, loading, error, latestUpPriceUSD } = usePrices();
+
+  // Calculate real-time percentages from latest price data
+  const currentYesPercent = latestUpPriceUSD ? Math.round(latestUpPriceUSD * 100) : debate.yesPercent;
+  const currentNoPercent = latestUpPriceUSD ? Math.round((1 - latestUpPriceUSD) * 100) : debate.noPercent;
 
   // Create base data points from historical prices - reverse to show oldest to newest
   const baseData = historicalPrices.map((price, index) => {
@@ -98,6 +102,8 @@ export default function DebateOverview({ debate }: Props) {
               tickLine={false}
               tick={{ fontSize: 12, fill: '#6b7280' }}
               interval={Math.floor(baseData.length / 4)} // Show ~4 labels
+              height={60}
+              dy={20}
             />
             <YAxis
               domain={[0, 100]}
@@ -239,13 +245,13 @@ export default function DebateOverview({ debate }: Props) {
           {/* Compact Progress Bar */}
           <div className="my-8">
             <div className="flex items-center justify-between text-gray-600 mb-1">
-              <span className="text-red-600 text-lg">{debate.noPercent}% No</span>
-              <span className="text-green-600 text-lg">{debate.yesPercent}% Yes</span>
+              <span className="text-red-600 text-lg">{currentNoPercent}% No</span>
+              <span className="text-green-600 text-lg">{currentYesPercent}% Yes</span>
             </div>
             <div className="w-full bg-green-500 rounded-full h-2">
               <div
                 className="bg-red-600 h-2 rounded-full transition-all duration-300"
-                style={{ width: `${debate.noPercent}%` }}
+                style={{ width: `${currentNoPercent}%` }}
               ></div>
             </div>
           </div>
