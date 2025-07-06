@@ -25,13 +25,13 @@ export default function DebateHeader({ debate }: Props) {
           {/* Compact Progress Bar */}
           <div className="mb-2">
             <div className="flex items-center justify-between text-base text-gray-500 mb-1">
-              <span className="text-green-600 font-medium">{debate.yesPercent}% Yes</span>
-              <span className="text-red-600 font-medium">{debate.noPercent}% No</span>
+              <span className="text-green-600 font-medium">{debate.noPercent}% No</span>
+              <span className="text-red-600 font-medium">{debate.yesPercent}% Yes</span>
             </div>
-            <div className="w-full bg-red-600 rounded-full h-2">
+            <div className="w-full bg-green-500 rounded-full h-2">
               <div
-                className="bg-green-500 h-2 rounded-full transition-all duration-300"
-                style={{ width: `${debate.yesPercent}%` }}
+                className="bg-red-600 h-2 rounded-full transition-all duration-300"
+                style={{ width: `${debate.noPercent}%` }}
               ></div>
             </div>
           </div>
