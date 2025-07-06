@@ -6,7 +6,7 @@ type Props = {
 
 export default function OpinionStream({ opinions }: Props) {
   return (
-    <div className="bg-white rounded-xl shadow p-4">
+    <div className="bg-white rounded-xl shadow-lg p-4">
       <div className="flex gap-2">
         <h3 className="text-lg font-semibold text-gray-800 mb-3">Live Opinion Stream</h3>
         <div className={`w-2 h-2 rounded-full mt-2.5 flex-shrink-0 bg-red-500`} />
