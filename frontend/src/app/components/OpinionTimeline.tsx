@@ -7,21 +7,26 @@ import {
   Tooltip,
   ReferenceLine,
 } from 'recharts';
+import { usePrices } from '../hooks/usePrices';
 
 type Props = {
-  trend: number[];
   title?: string;
 };
 
-export default function OpinionTimeline({ trend, title = 'Opinion Timeline' }: Props) {
-  // Create base data points
-  const baseData = trend.map((percentage, index) => ({
-    time: `${trend.length - index}h ago`,
-    timeIndex: index,
-    percentage: percentage,
-    greenLine: percentage >= 50 ? percentage : null,
-    redLine: percentage < 50 ? percentage : null,
-  }));
+export default function OpinionTimeline({ title = 'UP Token Price Timeline' }: Props) {
+  const { historicalPrices, loading, error } = usePrices();
+
+  // Create base data points from historical prices
+  const baseData = historicalPrices.map((price, index) => {
+    const percentage = price.upPriceUSD * 100; // Convert to percentage
+    return {
+      time: price.formattedDate,
+      timeIndex: index,
+      percentage: percentage,
+      greenLine: percentage >= 50 ? percentage : null,
+      redLine: percentage < 50 ? percentage : null,
+    };
+  });
 
   // Add interpolated crossing points for smooth transitions
   const processedData: any[] = [];
@@ -42,7 +47,7 @@ export default function OpinionTimeline({ trend, title = 'Opinion Timeline' }: P
       // Calculate interpolated crossing point
       const ratio = (50 - current.percentage) / (next.percentage - current.percentage);
       const crossingTimeIndex = current.timeIndex + ratio;
-      const crossingHours = Math.round(trend.length - crossingTimeIndex);
+      const crossingHours = Math.round(baseData.length - crossingTimeIndex);
 
       // Add crossing point with both colors to ensure continuity
       processedData.push({
@@ -53,6 +58,40 @@ export default function OpinionTimeline({ trend, title = 'Opinion Timeline' }: P
         redLine: 50, // Both lines meet at 50%
       });
     }
+  }
+
+  // Handle loading and error states
+  if (loading) {
+    return (
+      <div className="bg-white rounded-xl shadow p-6 flex-1">
+        <h3 className="text-lg font-semibold text-gray-800 mb-4">{title}</h3>
+        <div className="h-80 flex items-center justify-center">
+          <div className="text-gray-500">Loading price data...</div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="bg-white rounded-xl shadow p-6 flex-1">
+        <h3 className="text-lg font-semibold text-gray-800 mb-4">{title}</h3>
+        <div className="h-80 flex items-center justify-center">
+          <div className="text-red-500">Error: {error}</div>
+        </div>
+      </div>
+    );
+  }
+
+  if (historicalPrices.length === 0) {
+    return (
+      <div className="bg-white rounded-xl shadow p-6 flex-1">
+        <h3 className="text-lg font-semibold text-gray-800 mb-4">{title}</h3>
+        <div className="h-80 flex items-center justify-center">
+          <div className="text-gray-500">No price data available</div>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -66,7 +105,7 @@ export default function OpinionTimeline({ trend, title = 'Opinion Timeline' }: P
               axisLine={false}
               tickLine={false}
               tick={{ fontSize: 12, fill: '#6b7280' }}
-              interval={Math.floor(trend.length / 4)} // Show ~4 labels
+              interval={Math.floor(baseData.length / 4)} // Show ~4 labels
             />
             <YAxis
               domain={[0, 100]}
