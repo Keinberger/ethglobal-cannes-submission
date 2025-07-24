@@ -5,7 +5,7 @@ import '@rainbow-me/rainbowkit/styles.css';
 import { getDefaultConfig } from '@rainbow-me/rainbowkit';
 import { WagmiProvider } from 'wagmi';
 import { RainbowKitProvider } from '@rainbow-me/rainbowkit';
-import { sepolia, mantle, zircuitGarfieldTestnet, flowTestnet, baseSepolia } from 'viem/chains';
+import { mantle, zircuitGarfieldTestnet, flowTestnet, baseSepolia } from 'viem/chains';
 import { QueryClientProvider, QueryClient } from '@tanstack/react-query';
 
 export const config = getDefaultConfig({
