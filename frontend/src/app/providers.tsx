@@ -5,20 +5,13 @@ import '@rainbow-me/rainbowkit/styles.css';
 import { getDefaultConfig } from '@rainbow-me/rainbowkit';
 import { WagmiProvider } from 'wagmi';
 import { RainbowKitProvider } from '@rainbow-me/rainbowkit';
-import { sepolia, mantle, zircuitGarfieldTestnet, flowTestnet } from 'viem/chains';
+import { sepolia, mantle, zircuitGarfieldTestnet, flowTestnet, baseSepolia } from 'viem/chains';
 import { QueryClientProvider, QueryClient } from '@tanstack/react-query';
-
-// Create a custom Sepolia chain with Mantle branding
-const sepoliaWithMantleIcon = {
-  ...sepolia,
-  name: 'Mantle',
-  iconUrl: 'https://mantle.xyz/assets/mantle-logo.svg',
-} as const;
 
 export const config = getDefaultConfig({
   appName: 'My RainbowKit App',
   projectId: 'YOUR_PROJECT_ID',
-  chains: [sepoliaWithMantleIcon, mantle, zircuitGarfieldTestnet, flowTestnet],
+  chains: [baseSepolia, mantle, zircuitGarfieldTestnet, flowTestnet],
   ssr: true, // If your dApp uses server side rendering (SSR)
 });
 

@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { usePublicClient } from 'wagmi';
-import { sepolia } from 'viem/chains';
-import { AMM_CONTRACT_ADDRESS } from '../contracts/constants';
+import { baseSepolia } from 'viem/chains';
+import { BASE_SEPOLIA_AMM_CONTRACT_ADDRESS as AMM_CONTRACT_ADDRESS } from '../contracts/constants';
 import AMM_ABI from '../contracts/AMM.json';
 import { HistoricalPrice } from '../types';
 
@@ -15,7 +15,7 @@ export function usePrices() {
   const [error, setError] = useState<string | null>(null);
 
   // Use wagmi's public client
-  const publicClient = usePublicClient({ chainId: sepolia.id });
+  const publicClient = usePublicClient({ chainId: baseSepolia.id });
 
   /**
    * Fetch price data at a specific block number

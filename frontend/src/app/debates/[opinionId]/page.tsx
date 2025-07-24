@@ -3,7 +3,7 @@
 import { mockDebates } from '@/app/mockData';
 import { notFound, useParams } from 'next/navigation';
 import { useTokenBalances } from '@/app/hooks/useTokenBalances';
-import { SMART_VOTER_CONTRACT_ADDRESS } from '@/app/contracts/constants';
+import { BASE_SEPOLIA_SMART_VOTER_CONTRACT_ADDRESS as SMART_VOTER_CONTRACT_ADDRESS } from '@/app/contracts/constants';
 import OpinionCard from '@/app/components/OpinionCard';
 import OpinionStream from '@/app/components/OpinionStream';
 import DebateOverview from '@/app/components/DebateOverview';

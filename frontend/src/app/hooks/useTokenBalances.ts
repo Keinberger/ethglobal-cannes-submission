@@ -1,10 +1,10 @@
 import { useState, useEffect, useCallback } from 'react';
 import { usePublicClient } from 'wagmi';
-import { sepolia } from 'viem/chains';
+import { baseSepolia } from 'viem/chains';
 import {
-  USDC_CONTRACT_ADDRESS,
-  UP_TOKEN_CONTRACT_ADDRESS,
-  DOWN_TOKEN_CONTRACT_ADDRESS,
+  BASE_SEPOLIA_USDC_CONTRACT_ADDRESS as USDC_CONTRACT_ADDRESS,
+  BASE_SEPOLIA_UP_TOKEN_CONTRACT_ADDRESS as UP_TOKEN_CONTRACT_ADDRESS,
+  BASE_SEPOLIA_DOWN_TOKEN_CONTRACT_ADDRESS as DOWN_TOKEN_CONTRACT_ADDRESS,
 } from '../contracts/constants';
 
 // ERC20 ABI for balanceOf function
@@ -46,7 +46,7 @@ export function useTokenBalances(address?: `0x${string}`) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const publicClient = usePublicClient({ chainId: sepolia.id });
+  const publicClient = usePublicClient({ chainId: baseSepolia.id });
 
   const fetchBalances = useCallback(async () => {
     if (!address || !publicClient) {

@@ -2,9 +2,9 @@ import { useState, useCallback, useEffect } from 'react';
 import { useAccount, useContractWrite, useWaitForTransactionReceipt } from 'wagmi';
 import SmartVoter7702ABI from '../contracts/SmartVoter7702.json';
 import {
-  AMM_CONTRACT_ADDRESS,
-  LIQUIDITY_ENGINE_CONTRACT_ADDRESS,
-  SMART_VOTER_CONTRACT_ADDRESS,
+  BASE_SEPOLIA_AMM_CONTRACT_ADDRESS as AMM_CONTRACT_ADDRESS,
+  BASE_SEPOLIA_LIQUIDITY_ENGINE_CONTRACT_ADDRESS as LIQUIDITY_ENGINE_CONTRACT_ADDRESS,
+  BASE_SEPOLIA_SMART_VOTER_CONTRACT_ADDRESS as SMART_VOTER_CONTRACT_ADDRESS,
 } from '../contracts/constants';
 
 export type EIP7702ExitTransactionConfig = {
